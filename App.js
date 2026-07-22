@@ -10,6 +10,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import TasksScreen from './src/screens/TasksScreen';
 import CharacterScreen from './src/screens/CharacterScreen';
 import StatsScreen from './src/screens/StatsScreen';
+import AchievementsScreen from './src/screens/AchievementsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -17,6 +18,7 @@ const TAB_ICONS = [
   { name: 'Home', icon: 'home', iconOutline: 'home-outline', activeColor: '#FFD700' },
   { name: 'Tasks', icon: 'checkmark-circle', iconOutline: 'checkmark-circle-outline', activeColor: '#4ECDC4' },
   { name: 'Character', icon: 'person', iconOutline: 'person-outline', activeColor: '#A78BFA' },
+  { name: 'Achievements', icon: 'trophy', iconOutline: 'trophy-outline', activeColor: '#FFD700' },
   { name: 'Stats', icon: 'stats-chart', iconOutline: 'stats-chart-outline', activeColor: '#FF6B6B' },
 ];
 
@@ -64,6 +66,7 @@ export default function App() {
                 name === 'Home' ? HomeScreen :
                 name === 'Tasks' ? TasksScreen :
                 name === 'Character' ? CharacterScreen :
+                name === 'Achievements' ? AchievementsScreen :
                 StatsScreen
               }
               options={{

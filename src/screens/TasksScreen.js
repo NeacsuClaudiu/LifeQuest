@@ -12,6 +12,7 @@ import { loadData, saveData, KEYS, recordTaskCompleted, logAchievement } from '.
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import TaskCard from '../components/TaskCard';
 import ConfettiOverlay from '../components/ConfettiOverlay';
+import AchievementToast from '../components/AchievementToast';
 
 const CATEGORY_ASSETS = {
   phone_detox: require('../../assets/categories/phone_detox.png'),
@@ -39,6 +40,7 @@ export default function TasksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [levelUpConfetti, setLevelUpConfetti] = useState(false);
   const [rewardPopup, setRewardPopup] = useState(null);
+  const [toastAchievement, setToastAchievement] = useState(null);
 
   const loadAllData = useCallback(async () => {
     const t = await loadData(KEYS.TASKS, []);
@@ -126,6 +128,7 @@ export default function TasksScreen() {
     }
     if (newlyUnlocked.length > 0) {
       await saveData(KEYS.CHARACTER, updatedCharacter);
+      setToastAchievement(newlyUnlocked[0]);
     }
 
     setRewardPopup({ xp: rewardXp, task: task.title });
@@ -376,6 +379,7 @@ export default function TasksScreen() {
         </Modal>
 
         <ConfettiOverlay visible={levelUpConfetti} onComplete={() => setLevelUpConfetti(false)} />
+        <AchievementToast achievement={toastAchievement} visible={!!toastAchievement} onComplete={() => setToastAchievement(null)} />
       </View>
     </GestureHandlerRootView>
   );
