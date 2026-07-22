@@ -44,7 +44,7 @@ function TabBarIcon({ iconName, iconOutline, label, activeColor, focused }) {
     <Animated.View style={[styles.tabIcon, animStyle]}>
       <Ionicons
         name={focused ? iconName : iconOutline}
-        size={24}
+        size={20}
         color={focused ? activeColor : '#555'}
       />
       <Text style={[styles.tabLabel, { color: focused ? activeColor : '#555' }]}>{label}</Text>
@@ -60,9 +60,9 @@ function MainNavigator() {
     backgroundColor: loaded ? colors.tabBar : '#0D0D1A',
     borderTopColor: loaded ? colors.tabBorder : '#1A1A2E',
     borderTopWidth: 1,
-    height: 72,
-    paddingBottom: 8,
-    paddingTop: 8,
+    height: 56,
+    paddingBottom: 4,
+    paddingTop: 4,
     elevation: 0,
   };
 
@@ -112,7 +112,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 44 },
-  tabLabel: { fontSize: 10, marginTop: 4, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  activeDot: { width: 4, height: 4, borderRadius: 2, marginTop: 4 },
+  tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 36 },
+  tabLabel: { fontSize: 7, marginTop: 2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
+  activeDot: { width: 3, height: 3, borderRadius: 1.5, marginTop: 2 },
 });

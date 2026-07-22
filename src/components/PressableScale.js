@@ -29,9 +29,10 @@ export default function PressableScale({ children, onPress, style, scaleTo = 0.9
       onPressOut={handlePressOut}
       activeOpacity={0.85}
       disabled={disabled}
+      style={style}
       {...props}
     >
-      <Animated.View style={[style, { transform: [{ scale: scaleAnim }] }]}>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         {children}
       </Animated.View>
     </TouchableOpacity>

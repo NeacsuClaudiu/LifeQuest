@@ -56,7 +56,7 @@ function getCurrentValue(character, category) {
   }
 }
 
-function MilestoneCard({ milestone, current, index }) {
+function MilestoneCard({ milestone, current, index, cardBorder }) {
   const progress = Math.min((current / milestone.target) * 100, 100);
   const isComplete = current >= milestone.target;
 
@@ -73,7 +73,7 @@ function MilestoneCard({ milestone, current, index }) {
       </View>
       <View style={styles.cardBody}>
         <Text style={styles.cardLabel}>{milestone.label}</Text>
-        <AnimatedProgressBar progress={progress} color={isComplete ? '#4CAF50' : milestone.color} height={6} backgroundColor={colors.cardBorder} />
+        <AnimatedProgressBar progress={progress} color={isComplete ? '#4CAF50' : milestone.color} height={6} backgroundColor={cardBorder} />
         <Text style={styles.cardMeta}>
           {isComplete ? 'Completed!' : `${current.toLocaleString()} / ${milestone.target.toLocaleString()}`}
         </Text>
@@ -162,7 +162,7 @@ export default function MilestonesScreen() {
         {filteredMilestones.map((milestone, i) => {
           const current = getCurrentValue(character, milestone.category);
           return (
-            <MilestoneCard key={milestone.id} milestone={milestone} current={current} index={i} />
+            <MilestoneCard key={milestone.id} milestone={milestone} current={current} index={i} cardBorder={colors.cardBorder} />
           );
         })}
       </View>
