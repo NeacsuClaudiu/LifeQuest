@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl, Modal, TextInput, TouchableOpacity } from 'react-native';
 import PressableScale from '../components/PressableScale';
 import AnimatedProgressBar from '../components/AnimatedProgressBar';
 import FloatingReward from '../components/FloatingReward';
@@ -72,6 +72,8 @@ export default function HomeScreen({ navigation }) {
   const [weeklyStats, setWeeklyStats] = useState({ completed: 0, xpEarned: 0 });
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [newAchievements, setNewAchievements] = useState([]);
+  const [showRename, setShowRename] = useState(false);
+  const [renameText, setRenameText] = useState('');
   const { colors } = useTheme();
   const quote = getQuoteOfDay();
 
@@ -113,6 +115,20 @@ export default function HomeScreen({ navigation }) {
       setTimeout(() => setNewAchievements([]), 5000);
     }
   }, []);
+
+  const openRename = () => {
+    setRenameText(character.name || '');
+    setShowRename(true);
+  };
+
+  const saveRename = async () => {
+    if (renameText?.trim()) {
+      const updated = { ...character, name: renameText.trim() };
+      setCharacter(updated);
+      await saveData(KEYS.CHARACTER, updated);
+    }
+    setShowRename(false);
+  };
 
   const handleClaimReward = useCallback(async (rewards) => {
     const updated = { ...character };
@@ -198,7 +214,9 @@ export default function HomeScreen({ navigation }) {
                   <Text style={[styles.stageName, { color: stageColor }]}>
                     {stage.name} ({character.evolutionStage || 0}/7)
                   </Text>
-                  <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>{character.name || 'Hero'}</Text>
+                  <TouchableOpacity onPress={openRename}>
+                    <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>{character.name || 'Hero'}</Text>
+                  </TouchableOpacity>
                   <View style={[styles.titlePill, { backgroundColor: colors.accent + '22' }]}>
                     <Text style={[styles.titlePillText, { color: colors.accent }]}>{levelInfo.title}</Text>
                   </View>
@@ -382,6 +400,33 @@ export default function HomeScreen({ navigation }) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         contentContainerStyle={styles.scrollContent}
       />
+
+      <Modal visible={showRename} transparent animationType="fade" onRequestClose={() => setShowRename(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.renameModal, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+            <Ionicons name="pencil" size={28} color={colors.accent} style={{ marginBottom: 10 }} />
+            <Text style={[styles.renameTitle, { color: colors.textPrimary }]}>Edit Name</Text>
+            <TextInput
+              style={[styles.renameInput, { backgroundColor: colors.cardBorder, color: colors.textPrimary, borderColor: colors.accent }]}
+              value={renameText}
+              onChangeText={setRenameText}
+              placeholder="Enter your name"
+              placeholderTextColor={colors.textMuted}
+              maxLength={20}
+              autoFocus
+            />
+            <View style={styles.renameRow}>
+              <TouchableOpacity style={[styles.renameBtn, { backgroundColor: '#333' }]} onPress={() => setShowRename(false)}>
+                <Text style={[styles.renameBtnText, { color: colors.textPrimary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.renameBtn, { backgroundColor: colors.accent }]} onPress={saveRename}>
+                <Ionicons name="checkmark" size={16} color={colors.buttonText} />
+                <Text style={[styles.renameBtnText, { color: colors.buttonText, marginLeft: 4 }]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -484,4 +529,23 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   emptySubtext: { color: '#666', fontSize: 13, marginTop: 4 },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center',
+    alignItems: 'center', padding: 32,
+  },
+  renameModal: {
+    borderRadius: 20, padding: 24, borderWidth: 1, alignItems: 'center',
+    width: '100%', maxWidth: 320,
+  },
+  renameTitle: { fontSize: 18, fontWeight: '900', marginBottom: 16 },
+  renameInput: {
+    width: '100%', borderRadius: 12, padding: 14, fontSize: 16,
+    borderWidth: 1, textAlign: 'center', marginBottom: 20, fontWeight: '600',
+  },
+  renameRow: { flexDirection: 'row', gap: 12 },
+  renameBtn: {
+    flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  renameBtnText: { fontSize: 14, fontWeight: '700' },
 });
