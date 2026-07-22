@@ -13,13 +13,15 @@ import CharacterScreen from './src/screens/CharacterScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import AchievementsScreen from './src/screens/AchievementsScreen';
 import DailyReviewScreen from './src/screens/DailyReviewScreen';
+import WeeklyReviewScreen from './src/screens/WeeklyReviewScreen';
 
 const Tab = createBottomTabNavigator();
 
 const TAB_ICONS = [
   { name: 'Home', icon: 'home', iconOutline: 'home-outline', activeColor: '#FFD700' },
   { name: 'Tasks', icon: 'checkmark-circle', iconOutline: 'checkmark-circle-outline', activeColor: '#4ECDC4' },
-  { name: 'Review', icon: 'today', iconOutline: 'today-outline', activeColor: '#81C784' },
+  { name: 'Daily', icon: 'today', iconOutline: 'today-outline', activeColor: '#81C784' },
+  { name: 'Weekly', icon: 'calendar', iconOutline: 'calendar-outline', activeColor: '#64B5F6' },
   { name: 'Character', icon: 'person', iconOutline: 'person-outline', activeColor: '#A78BFA' },
   { name: 'Achievements', icon: 'trophy', iconOutline: 'trophy-outline', activeColor: '#FFD700' },
   { name: 'Stats', icon: 'stats-chart', iconOutline: 'stats-chart-outline', activeColor: '#FF6B6B' },
@@ -77,7 +79,8 @@ function MainNavigator() {
           component={
             name === 'Home' ? HomeScreen :
             name === 'Tasks' ? TasksScreen :
-            name === 'Review' ? DailyReviewScreen :
+            name === 'Daily' ? DailyReviewScreen :
+            name === 'Weekly' ? WeeklyReviewScreen :
             name === 'Character' ? CharacterScreen :
             name === 'Achievements' ? AchievementsScreen :
             StatsScreen
