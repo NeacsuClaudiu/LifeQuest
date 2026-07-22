@@ -49,7 +49,9 @@ export default function CharacterView({ character, size = 'large', animated = tr
       <View style={[styles.glowOuter, { width: imgSize + 40, height: imgSize + 40, borderColor: color + '22' }]} />
       <View style={[styles.glowInner, { width: imgSize + 10, height: imgSize + 10, borderColor: color + '33' }]} />
       <Animated.View style={wiltStyle}>
-        <Image source={sprite} style={{ width: imgSize, height: imgSize }} resizeMode="contain" />
+        <View style={[styles.circleClip, { width: imgSize, height: imgSize, borderColor: color + '44' }]}>
+          <Image source={sprite} style={{ width: imgSize, height: imgSize }} resizeMode="cover" />
+        </View>
       </Animated.View>
       <Text style={[styles.stageName, { color }]}>{stage.name}</Text>
       {penalty > 0 && (
@@ -61,6 +63,12 @@ export default function CharacterView({ character, size = 'large', animated = tr
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center', justifyContent: 'center' },
+  circleClip: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: '#0D0D1A',
+    borderWidth: 2,
+  },
   glowOuter: {
     position: 'absolute', borderRadius: 999, borderWidth: 1,
     opacity: 0.6,
