@@ -13,16 +13,14 @@ import CharacterScreen from './src/screens/CharacterScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import AchievementsScreen from './src/screens/AchievementsScreen';
 import MilestonesScreen from './src/screens/MilestonesScreen';
-import DailyReviewScreen from './src/screens/DailyReviewScreen';
-import WeeklyReviewScreen from './src/screens/WeeklyReviewScreen';
+import ReviewScreen from './src/screens/ReviewScreen';
 
 const Tab = createBottomTabNavigator();
 
 const TAB_ICONS = [
   { name: 'Home', icon: 'home', iconOutline: 'home-outline', activeColor: '#FFD700' },
   { name: 'Tasks', icon: 'checkmark-circle', iconOutline: 'checkmark-circle-outline', activeColor: '#4ECDC4' },
-  { name: 'Daily', icon: 'today', iconOutline: 'today-outline', activeColor: '#81C784' },
-  { name: 'Weekly', icon: 'calendar', iconOutline: 'calendar-outline', activeColor: '#64B5F6' },
+  { name: 'Review', icon: 'analytics', iconOutline: 'analytics-outline', activeColor: '#81C784' },
   { name: 'Character', icon: 'person', iconOutline: 'person-outline', activeColor: '#A78BFA' },
   { name: 'Achievements', icon: 'trophy', iconOutline: 'trophy-outline', activeColor: '#FFD700' },
   { name: 'Milestones', icon: 'flag', iconOutline: 'flag-outline', activeColor: '#FF9800' },
@@ -44,7 +42,7 @@ function TabBarIcon({ iconName, iconOutline, label, activeColor, focused }) {
     <Animated.View style={[styles.tabIcon, animStyle]}>
       <Ionicons
         name={focused ? iconName : iconOutline}
-        size={20}
+        size={22}
         color={focused ? activeColor : '#555'}
       />
       <Text style={[styles.tabLabel, { color: focused ? activeColor : '#555' }]}>{label}</Text>
@@ -81,8 +79,7 @@ function MainNavigator() {
           component={
             name === 'Home' ? HomeScreen :
             name === 'Tasks' ? TasksScreen :
-            name === 'Daily' ? DailyReviewScreen :
-            name === 'Weekly' ? WeeklyReviewScreen :
+            name === 'Review' ? ReviewScreen :
             name === 'Character' ? CharacterScreen :
             name === 'Achievements' ? AchievementsScreen :
             name === 'Milestones' ? MilestonesScreen :
@@ -112,7 +109,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 36 },
-  tabLabel: { fontSize: 7, marginTop: 2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
+  tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 40 },
+  tabLabel: { fontSize: 8, marginTop: 2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
   activeDot: { width: 3, height: 3, borderRadius: 1.5, marginTop: 2 },
 });

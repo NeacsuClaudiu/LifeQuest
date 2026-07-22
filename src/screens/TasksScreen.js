@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DIFFICULTIES, CATEGORIES, PRESET_TASKS } from '../data/TaskDatabase';
-import { getLevelInfo, calculateReward, processDayCheck, evolveCharacter, getXpPenalty, getEvolutionStage, getEvolutionColor, checkAchievements, getUnlockedAchievements } from '../data/CharacterData';
+import { getLevelInfo, getLevel, calculateReward, processDayCheck, evolveCharacter, getXpPenalty, getEvolutionStage, getEvolutionColor, checkAchievements, getUnlockedAchievements } from '../data/CharacterData';
 import { loadData, saveData, KEYS, recordTaskCompleted, logAchievement } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import TaskCard from '../components/TaskCard';
@@ -106,12 +106,13 @@ export default function TasksScreen() {
 
     const oldLevel = c.level;
     const oldStage = c.evolutionStage || 0;
-    const levelInfo = getLevelInfo(updatedCharacter.totalXpEarned);
-    updatedCharacter.level = levelInfo.level;
+    const newLevel = getLevel(updatedCharacter.totalXpEarned);
+    const levelInfo = getLevelInfo(newLevel);
+    updatedCharacter.level = newLevel;
 
     updatedCharacter = evolveCharacter(updatedCharacter);
 
-    if (levelInfo.level > oldLevel) {
+    if (newLevel > oldLevel) {
       setLevelUpConfetti(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else if ((updatedCharacter.evolutionStage || 0) > oldStage) {

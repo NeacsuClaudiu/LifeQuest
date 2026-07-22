@@ -58,7 +58,7 @@ export default function StatsScreen() {
   }, []));
 
   const resetGame = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
     Alert.alert('Reset Game', 'All progress will be lost! Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Reset', style: 'destructive', onPress: async () => {
