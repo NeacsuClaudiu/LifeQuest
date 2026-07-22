@@ -7,6 +7,7 @@ import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { loadData, saveData, clearAll, KEYS, getTodayKey, getWeekKey } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import { CATEGORIES } from '../data/TaskDatabase';
+import Heatmap from '../components/Heatmap';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -220,6 +221,10 @@ export default function StatsScreen() {
           </View>
         </AnimatedCard>
       )}
+
+      <AnimatedCard title="Activity Heatmap" iconName="grid-outline" delay={520}>
+        <Heatmap completedTasks={completedTasks} />
+      </AnimatedCard>
 
       <AnimatedCard title="Milestones" iconName="flag-outline" delay={540}>
         <View style={styles.milestoneGrid}>
