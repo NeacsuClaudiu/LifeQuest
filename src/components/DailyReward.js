@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, withSpring, withRepeat, Easing, runOnJS } from 'react-native-reanimated';
@@ -169,61 +169,63 @@ export default function DailyReward({ character, onClaim, style }) {
       <Modal visible={showModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <Animated.View style={[styles.modal, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }, rewardAnimStyle]}>
-            <View style={styles.modalHeader}>
-              <View style={[styles.modalIconWrap, { backgroundColor: colors.accent + '22' }]}>
-                <Ionicons name="gift" size={32} color={colors.accent} />
-              </View>
-              <Text style={[styles.modalTitle, { color: colors.accent }]}>Daily Reward</Text>
-              <Text style={[styles.modalStreak, { color: colors.textSecondary }]}>
-                Day {character?.dailyRewardStreak ? character.dailyRewardStreak + 1 : 1} streak
-              </Text>
-            </View>
-
-            {rewards && (
-              <>
-                {animPhase === 'complete' && (
-                  <View style={styles.modalStars}>
-                    {[0, 1, 2].map(i => (
-                      <Ionicons key={i} name="star" size={16} color={colors.accent} />
-                    ))}
-                  </View>
-                )}
-
-                <View style={styles.rewardRow}>
-                  <View style={[styles.rewardItem, { backgroundColor: colors.cardBorder, borderColor: colors.accent + '33' }]}>
-                    <Ionicons name="flash" size={22} color={colors.accent} />
-                    <Text style={[styles.rewardValue, { color: colors.textPrimary }]}>+{rewards.xp}</Text>
-                    <Text style={[styles.rewardLabel, { color: colors.textSecondary }]}>XP</Text>
-                  </View>
-                  <View style={[styles.rewardItem, { backgroundColor: colors.cardBorder, borderColor: '#FF980033' }]}>
-                    <Ionicons name="cash" size={22} color="#FF9800" />
-                    <Text style={[styles.rewardValue, { color: colors.textPrimary }]}>+{rewards.gold}</Text>
-                    <Text style={[styles.rewardLabel, { color: colors.textSecondary }]}>Gold</Text>
-                  </View>
-                  <View style={[styles.rewardItem, { backgroundColor: colors.cardBorder, borderColor: rewards.bonus.color + '33' }]}>
-                    <Ionicons name={rewards.bonus.icon} size={22} color={rewards.bonus.color} />
-                    <Text style={[styles.rewardValue, { color: rewards.bonus.color, fontSize: 9 }]} numberOfLines={2}>
-                      {rewards.bonus.label}
-                    </Text>
-                    <Text style={[styles.rewardLabel, { color: colors.textSecondary }]}>Bonus</Text>
-                  </View>
+            <ScrollView contentContainerStyle={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalHeader}>
+                <View style={[styles.modalIconWrap, { backgroundColor: colors.accent + '22' }]}>
+                  <Ionicons name="gift" size={32} color={colors.accent} />
                 </View>
+                <Text style={[styles.modalTitle, { color: colors.accent }]}>Daily Reward</Text>
+                <Text style={[styles.modalStreak, { color: colors.textSecondary }]}>
+                  Day {character?.dailyRewardStreak ? character.dailyRewardStreak + 1 : 1} streak
+                </Text>
+              </View>
 
-                <Text style={[styles.rewardTier, { color: colors.accentSecondary }]}>{rewards.tier} Tier</Text>
+              {rewards && (
+                <>
+                  {animPhase === 'complete' && (
+                    <View style={styles.modalStars}>
+                      {[0, 1, 2].map(i => (
+                        <Ionicons key={i} name="star" size={16} color={colors.accent} />
+                      ))}
+                    </View>
+                  )}
 
-                {animPhase === 'complete' ? (
-                  <TouchableOpacity style={[styles.claimBtn, { backgroundColor: colors.accent }]} onPress={closeModal}>
-                    <Ionicons name="checkmark-circle" size={20} color={colors.buttonText} />
-                    <Text style={[styles.claimBtnText, { color: colors.buttonText }]}>Collected!</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.claimingText}>
-                    <Ionicons name="hourglass" size={18} color={colors.accent} />
-                    <Text style={[styles.claimingLabel, { color: colors.accent }]}>Claiming...</Text>
+                  <View style={styles.rewardRow}>
+                    <View style={[styles.rewardItem, { backgroundColor: colors.cardBorder, borderColor: colors.accent + '33' }]}>
+                      <Ionicons name="flash" size={22} color={colors.accent} />
+                      <Text style={[styles.rewardValue, { color: colors.textPrimary }]}>+{rewards.xp}</Text>
+                      <Text style={[styles.rewardLabel, { color: colors.textSecondary }]}>XP</Text>
+                    </View>
+                    <View style={[styles.rewardItem, { backgroundColor: colors.cardBorder, borderColor: '#FF980033' }]}>
+                      <Ionicons name="cash" size={22} color="#FF9800" />
+                      <Text style={[styles.rewardValue, { color: colors.textPrimary }]}>+{rewards.gold}</Text>
+                      <Text style={[styles.rewardLabel, { color: colors.textSecondary }]}>Gold</Text>
+                    </View>
+                    <View style={[styles.rewardItem, { backgroundColor: colors.cardBorder, borderColor: rewards.bonus.color + '33' }]}>
+                      <Ionicons name={rewards.bonus.icon} size={22} color={rewards.bonus.color} />
+                      <Text style={[styles.rewardValue, { color: rewards.bonus.color, fontSize: 9 }]} numberOfLines={2}>
+                        {rewards.bonus.label}
+                      </Text>
+                      <Text style={[styles.rewardLabel, { color: colors.textSecondary }]}>Bonus</Text>
+                    </View>
                   </View>
-                )}
-              </>
-            )}
+
+                  <Text style={[styles.rewardTier, { color: colors.accentSecondary }]}>{rewards.tier} Tier</Text>
+
+                  {animPhase === 'complete' ? (
+                    <TouchableOpacity style={[styles.claimBtn, { backgroundColor: colors.accent }]} onPress={closeModal}>
+                      <Ionicons name="checkmark-circle" size={20} color={colors.buttonText} />
+                      <Text style={[styles.claimBtnText, { color: colors.buttonText }]}>Collected!</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.claimingText}>
+                      <Ionicons name="hourglass" size={18} color={colors.accent} />
+                      <Text style={[styles.claimingLabel, { color: colors.accent }]}>Claiming...</Text>
+                    </View>
+                  )}
+                </>
+              )}
+            </ScrollView>
           </Animated.View>
         </View>
       </Modal>
@@ -266,9 +268,10 @@ const styles = StyleSheet.create({
   },
   modal: {
     backgroundColor: '#1A1A2E', borderRadius: 24, padding: 24,
-    width: 300, borderWidth: 1, borderColor: '#2A2A3E',
-    alignItems: 'center',
+    width: 290, borderWidth: 1, borderColor: '#2A2A3E',
+    alignItems: 'center', maxHeight: Dimensions.get('window').height * 0.75,
   },
+  modalScroll: { alignItems: 'center' },
   modalHeader: { alignItems: 'center', marginBottom: 20 },
   modalIconWrap: {
     width: 64, height: 64, borderRadius: 32,

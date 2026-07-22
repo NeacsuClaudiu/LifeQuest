@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Share, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ function ShopItem({ item, owned, equipped, onPress, delay, colors }) {
     <Animated.View
       entering={FadeInDown.delay(delay).springify()}
       layout={Layout.springify()}
+      style={{ width: '48%' }}
     >
       <PressableScale
         style={[styles.itemCard, { backgroundColor: colors.cardBg, borderColor: equipped ? colors.accent : colors.cardBorder }, equipped && styles.equippedCard, !owned && styles.lockedCard]}
@@ -43,6 +44,8 @@ function ShopItem({ item, owned, equipped, onPress, delay, colors }) {
 export default function CharacterScreen() {
   const [character, setCharacter] = useState(null);
   const [activeTab, setActiveTab] = useState('customize');
+  const [showRename, setShowRename] = useState(false);
+  const [renameText, setRenameText] = useState('');
   const { colors, refreshTheme, setThemeId } = useTheme();
 
   useFocusEffect(useCallback(async () => {
@@ -77,13 +80,16 @@ export default function CharacterScreen() {
     updateCharacter({ customization: newCustomization });
   };
 
-  const renameCharacter = () => {
-    Alert.prompt('Rename Hero', 'Enter a new name:', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Rename', onPress: (name) => {
-        if (name?.trim()) updateCharacter({ name: name.trim() });
-      }},
-    ]);
+  const openRename = () => {
+    setRenameText(character.name || '');
+    setShowRename(true);
+  };
+
+  const saveRename = () => {
+    if (renameText?.trim()) {
+      updateCharacter({ name: renameText.trim() });
+    }
+    setShowRename(false);
   };
 
   if (!character) {
@@ -136,7 +142,7 @@ export default function CharacterScreen() {
       <LinearGradient colors={[stageColor + '33', colors.background]} style={styles.heroGradient}>
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.hero}>
           <CharacterView character={character} size="large" />
-          <PressableScale onPress={renameCharacter} style={styles.nameWrap}>
+          <PressableScale onPress={openRename} style={styles.nameWrap}>
             <Text style={[styles.charName, { color: colors.textPrimary }]}>{character.name || 'Hero'}</Text>
             <Text style={[styles.tapRename, { color: colors.textMuted }]}>tap to rename</Text>
           </PressableScale>
@@ -201,19 +207,21 @@ export default function CharacterScreen() {
       <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.shopSection}>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Cosmetic Shop</Text>
 
-        <View style={styles.tabRow}>
-          {['customize', 'hats', 'accessories', 'auras', 'themes'].map(tab => (
-            <PressableScale
-              key={tab}
-              style={[styles.tab, { backgroundColor: activeTab === tab ? colors.accent : colors.cardBg, borderColor: activeTab === tab ? colors.accent : colors.cardBorder }]}
-              onPress={() => { Haptics.selectionAsync(); setActiveTab(tab); }}
-            >
-              <Text style={[styles.tabText, { color: activeTab === tab ? colors.buttonText : colors.textMuted }]}>
-                {tab === 'customize' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </Text>
-            </PressableScale>
-          ))}
-        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
+          <View style={styles.tabRow}>
+            {['customize', 'hats', 'accessories', 'auras', 'themes'].map(tab => (
+              <PressableScale
+                key={tab}
+                style={[styles.tab, { backgroundColor: activeTab === tab ? colors.accent : colors.cardBg, borderColor: activeTab === tab ? colors.accent : colors.cardBorder }]}
+                onPress={() => { Haptics.selectionAsync(); setActiveTab(tab); }}
+              >
+                <Text style={[styles.tabText, { color: activeTab === tab ? colors.buttonText : colors.textMuted }]}>
+                  {tab === 'customize' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </Text>
+              </PressableScale>
+            ))}
+          </View>
+        </ScrollView>
 
         {activeTab === 'themes' ? (
           <View style={styles.shopGrid}>
@@ -290,6 +298,33 @@ export default function CharacterScreen() {
           </View>
         )}
       </Animated.View>
+
+      <Modal visible={showRename} transparent animationType="fade" onRequestClose={() => setShowRename(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.renameModal, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+            <Ionicons name="pencil" size={32} color={colors.accent} style={{ marginBottom: 12 }} />
+            <Text style={[styles.renameTitle, { color: colors.textPrimary }]}>Edit Name</Text>
+            <TextInput
+              style={[styles.renameInput, { backgroundColor: colors.cardBorder, color: colors.textPrimary, borderColor: colors.accent }]}
+              value={renameText}
+              onChangeText={setRenameText}
+              placeholder="Enter your name"
+              placeholderTextColor={colors.textMuted}
+              maxLength={20}
+              autoFocus
+            />
+            <View style={styles.renameRow}>
+              <TouchableOpacity style={[styles.renameBtn, { backgroundColor: '#333' }]} onPress={() => setShowRename(false)}>
+                <Text style={[styles.renameBtnText, { color: colors.textPrimary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.renameBtn, { backgroundColor: colors.accent }]} onPress={saveRename}>
+                <Ionicons name="checkmark" size={16} color={colors.buttonText} />
+                <Text style={[styles.renameBtnText, { color: colors.buttonText, marginLeft: 4 }]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -345,7 +380,8 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 13, fontWeight: '700', width: 30, textAlign: 'right' },
   shopSection: { marginTop: 20, paddingHorizontal: 16 },
   sectionTitle: { color: '#fff', fontSize: 20, fontWeight: '800', marginBottom: 12 },
-  tabRow: { flexDirection: 'row', marginBottom: 14 },
+  tabScroll: { marginBottom: 14 },
+  tabRow: { flexDirection: 'row' },
   tab: {
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
     backgroundColor: '#1A1A2E', marginRight: 8, borderWidth: 1, borderColor: '#2A2A3E',
@@ -355,7 +391,7 @@ const styles = StyleSheet.create({
   activeTabText: { color: '#0D0D1A' },
   shopGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   itemCard: {
-    width: '48%', backgroundColor: '#1A1A2E', borderRadius: 20, padding: 16, marginBottom: 12,
+    width: '100%', backgroundColor: '#1A1A2E', borderRadius: 20, padding: 16, marginBottom: 12,
     alignItems: 'center', borderWidth: 1, borderColor: '#2A2A3E',
   },
   equippedCard: { borderColor: '#FFD700', backgroundColor: '#2A2A1E' },
@@ -387,4 +423,23 @@ const styles = StyleSheet.create({
   themeEquippedBadge: { color: '#FFD700', backgroundColor: '#FFD70022' },
   themeOwnedBadge: { color: '#4CAF50', backgroundColor: '#4CAF5022' },
   themeCostBadge: { color: '#FF9800', backgroundColor: '#FF980022' },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center',
+    alignItems: 'center', padding: 32,
+  },
+  renameModal: {
+    borderRadius: 20, padding: 24, borderWidth: 1, alignItems: 'center',
+    width: '100%', maxWidth: 320,
+  },
+  renameTitle: { fontSize: 18, fontWeight: '900', marginBottom: 16 },
+  renameInput: {
+    width: '100%', borderRadius: 12, padding: 14, fontSize: 16,
+    borderWidth: 1, textAlign: 'center', marginBottom: 20, fontWeight: '600',
+  },
+  renameRow: { flexDirection: 'row', gap: 12 },
+  renameBtn: {
+    flexDirection: 'row', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  renameBtnText: { fontSize: 14, fontWeight: '700' },
 });

@@ -44,16 +44,18 @@ export default function CharacterView({ character, size = 'large', animated = tr
 
   return (
     <Animated.View style={[styles.container, floatStyle]}>
-      {penalty > 0 && (
-        <View style={[styles.wiltOverlay, { backgroundColor: `rgba(139, 69, 19, ${penalty * 0.3})` }]} />
-      )}
-      <View style={[styles.glowOuter, { width: imgSize + 40, height: imgSize + 40, borderColor: color + '22' }]} />
-      <View style={[styles.glowInner, { width: imgSize + 10, height: imgSize + 10, borderColor: color + '33' }]} />
-      <Animated.View style={wiltStyle}>
-        <View style={[styles.circleClip, { width: imgSize, height: imgSize, borderColor: color + '44', backgroundColor: color + '11' }]}>
-          <Image source={sprite} style={{ width: imgSize, height: imgSize }} resizeMode="cover" />
-        </View>
-      </Animated.View>
+      <View style={styles.centerWrap}>
+        <View style={[styles.glowOuter, { width: imgSize + 40, height: imgSize + 40, borderRadius: (imgSize + 40) / 2, borderColor: color + '22' }]} />
+        <View style={[styles.glowInner, { width: imgSize + 10, height: imgSize + 10, borderRadius: (imgSize + 10) / 2, borderColor: color + '33' }]} />
+        {penalty > 0 && (
+          <View style={[styles.wiltOverlay, { width: imgSize + 40, height: imgSize + 40, borderRadius: (imgSize + 40) / 2, backgroundColor: `rgba(139, 69, 19, ${penalty * 0.3})` }]} />
+        )}
+        <Animated.View style={wiltStyle}>
+          <View style={[styles.circleClip, { width: imgSize, height: imgSize, borderRadius: imgSize / 2, borderColor: color + '44', backgroundColor: color + '11' }]}>
+            <Image source={sprite} style={{ width: imgSize, height: imgSize }} resizeMode="cover" />
+          </View>
+        </Animated.View>
+      </View>
       <Text style={[styles.stageName, { color }]}>{stage.name}</Text>
       {penalty > 0 && (
         <Text style={styles.penaltyText}>-{Math.round(penalty * 100)}% XP</Text>
@@ -64,21 +66,21 @@ export default function CharacterView({ character, size = 'large', animated = tr
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center', justifyContent: 'center' },
+  centerWrap: { alignItems: 'center', justifyContent: 'center' },
   circleClip: {
-    borderRadius: 999,
     overflow: 'hidden',
     borderWidth: 2,
   },
   glowOuter: {
-    position: 'absolute', borderRadius: 999, borderWidth: 1,
+    position: 'absolute', borderWidth: 1,
     opacity: 0.6,
   },
   glowInner: {
-    position: 'absolute', borderRadius: 999, borderWidth: 1,
+    position: 'absolute', borderWidth: 1,
     opacity: 0.4,
   },
   wiltOverlay: {
-    position: 'absolute', width: '120%', height: '120%', borderRadius: 999,
+    position: 'absolute',
   },
   stageName: {
     fontSize: 11, fontWeight: '700', marginTop: 4,

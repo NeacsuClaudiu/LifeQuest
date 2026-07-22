@@ -27,11 +27,11 @@ const TAB_ICONS = [
   { name: 'Stats', icon: 'stats-chart', iconOutline: 'stats-chart-outline', activeColor: '#FF6B6B' },
 ];
 
-function TabBarIcon({ iconName, iconOutline, label, activeColor, focused }) {
+function TabBarIcon({ iconName, iconOutline, activeColor, focused }) {
   const scale = useSharedValue(1);
 
   React.useEffect(() => {
-    scale.value = withSpring(focused ? 1.2 : 1, { damping: 12, stiffness: 200 });
+    scale.value = withSpring(focused ? 1.15 : 1, { damping: 12, stiffness: 200 });
   }, [focused]);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -39,13 +39,12 @@ function TabBarIcon({ iconName, iconOutline, label, activeColor, focused }) {
   }));
 
   return (
-    <Animated.View style={[styles.tabIcon, animStyle]}>
+    <Animated.View style={animStyle}>
       <Ionicons
         name={focused ? iconName : iconOutline}
         size={22}
         color={focused ? activeColor : '#555'}
       />
-      <Text style={[styles.tabLabel, { color: focused ? activeColor : '#555' }]}>{label}</Text>
       {focused && <View style={[styles.activeDot, { backgroundColor: activeColor }]} />}
     </Animated.View>
   );
@@ -54,13 +53,13 @@ function TabBarIcon({ iconName, iconOutline, label, activeColor, focused }) {
 function MainNavigator() {
   const { loaded, colors } = useTheme();
 
-  const tabBarStyle = {
+  const   tabBarStyle = {
     backgroundColor: loaded ? colors.tabBar : '#0D0D1A',
     borderTopColor: loaded ? colors.tabBorder : '#1A1A2E',
     borderTopWidth: 1,
-    height: 56,
-    paddingBottom: 4,
-    paddingTop: 4,
+    height: 50,
+    paddingBottom: 2,
+    paddingTop: 2,
     elevation: 0,
   };
 
@@ -88,7 +87,7 @@ function MainNavigator() {
           options={{
             animation: 'fade',
             tabBarIcon: ({ focused }) => (
-              <TabBarIcon iconName={icon} iconOutline={iconOutline} label={name} activeColor={activeColor} focused={focused} />
+              <TabBarIcon iconName={icon} iconOutline={iconOutline} activeColor={activeColor} focused={focused} />
             ),
           }}
         />
@@ -109,7 +108,5 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 40 },
-  tabLabel: { fontSize: 8, marginTop: 2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
-  activeDot: { width: 3, height: 3, borderRadius: 1.5, marginTop: 2 },
+  activeDot: { width: 3, height: 3, borderRadius: 1.5, marginTop: 1, alignSelf: 'center' },
 });
