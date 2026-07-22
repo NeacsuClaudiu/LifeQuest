@@ -282,10 +282,10 @@ export default function StatsScreen() {
         </AnimatedCard>
       )}
 
-      <PressableScale style={styles.resetBtn} onPress={resetGame}>
+      <TouchableOpacity style={[styles.resetBtn, { backgroundColor: colors.cardBg, borderColor: '#F4433633' }]} onPress={resetGame}>
         <Ionicons name="trash-outline" size={16} color="#F44336" />
         <Text style={styles.resetText}>Reset Game</Text>
-      </PressableScale>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   achChipText: { color: '#aaa', fontSize: 10, fontWeight: '600', marginLeft: 4 },
   resetBtn: {
     marginHorizontal: 16, marginVertical: 20, padding: 16, borderRadius: 14,
-    backgroundColor: '#2A1A1A', alignItems: 'center', borderWidth: 1, borderColor: '#F4433633',
+    alignItems: 'center', borderWidth: 1,
     flexDirection: 'row', justifyContent: 'center', gap: 8,
   },
   resetText: { color: '#F44336', fontSize: 14, fontWeight: '600' },
