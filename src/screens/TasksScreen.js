@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, RefreshControl, Image } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DIFFICULTIES, CATEGORIES, PRESET_TASKS } from '../data/TaskDatabase';
-import { getLevelInfo, getCharacterStage, calculateReward } from '../data/CharacterData';
+import { getLevelInfo, calculateReward, processDayCheck, evolveCharacter, getXpPenalty, getEvolutionStage, getEvolutionColor } from '../data/CharacterData';
 import { loadData, saveData, KEYS } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import TaskCard from '../components/TaskCard';
@@ -47,6 +47,8 @@ export default function TasksScreen() {
       c = { ...DEFAULT_CHARACTER };
       await saveData(KEYS.CHARACTER, c);
     }
+    c = processDayCheck(c);
+    await saveData(KEYS.CHARACTER, c);
     setTasks(t);
     setCharacter(c);
   }, []);
@@ -63,7 +65,7 @@ export default function TasksScreen() {
     if (!c) return;
 
     const difficulty = DIFFICULTIES[task.difficulty];
-    const rewardXp = calculateReward(difficulty.xp, 1, c.currentStreak || 0);
+    const rewardXp = calculateReward(difficulty.xp, 1, c.currentStreak || 0, c);
     const now = new Date().toDateString();
 
     let newStreak = c.currentStreak || 0;
@@ -80,7 +82,7 @@ export default function TasksScreen() {
       t.id === task.id ? { ...t, completed: true, completedAt: new Date().toISOString() } : t
     );
 
-    const updatedCharacter = {
+    let updatedCharacter = {
       ...c,
       currentXp: (c.currentXp || 0) + rewardXp,
       totalXpEarned: (c.totalXpEarned || 0) + rewardXp,
@@ -88,14 +90,22 @@ export default function TasksScreen() {
       currentStreak: newStreak,
       longestStreak: Math.max(newStreak, c.longestStreak || 0),
       lastActiveDate: now,
+      consecutiveDays: (c.consecutiveDays || 0) + 1,
+      daysSkipped: 0,
       stats: { ...c.stats, discipline: (c.stats?.discipline || 0) + 1 },
     };
 
     const oldLevel = c.level;
+    const oldStage = c.evolutionStage || 0;
     const levelInfo = getLevelInfo(updatedCharacter.totalXpEarned);
     updatedCharacter.level = levelInfo.level;
 
+    updatedCharacter = evolveCharacter(updatedCharacter);
+
     if (levelInfo.level > oldLevel) {
+      setLevelUpConfetti(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else if ((updatedCharacter.evolutionStage || 0) > oldStage) {
       setLevelUpConfetti(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -159,15 +169,19 @@ export default function TasksScreen() {
 
   const activeTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
+  const penalty = character ? getXpPenalty(character) : 0;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
         {rewardPopup && (
-          <Animated.View entering={FadeIn} style={styles.rewardPopup}>
+          <Animated.View entering={FadeIn} style={[styles.rewardPopup, penalty > 0 && { borderColor: '#FFA726' }]}>
             <Ionicons name="flash" size={24} color="#FFD700" />
             <View>
               <Text style={styles.rewardTitle}>+{rewardPopup.xp} XP</Text>
+              {penalty > 0 && (
+                <Text style={styles.penaltyLabel}>-{Math.round(penalty * 100)}% penalty applied</Text>
+              )}
               <Text style={styles.rewardTask} numberOfLines={1}>{rewardPopup.task}</Text>
             </View>
           </Animated.View>
@@ -179,6 +193,15 @@ export default function TasksScreen() {
               <Animated.View entering={FadeInDown.delay(100).springify()}>
                 <Text style={styles.screenTitle}>Quests</Text>
               </Animated.View>
+
+              {penalty > 0 && (
+                <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.penaltyBar}>
+                  <Ionicons name="alert-circle" size={16} color="#FF5252" />
+                  <Text style={styles.penaltyBarText}>
+                    Inactive {character?.daysSkipped || 0} day(s) - XP reduced by {Math.round(penalty * 100)}%
+                  </Text>
+                </Animated.View>
+              )}
 
               <Animated.View entering={FadeInDown.delay(200).springify()}>
                 <FlatList horizontal showsHorizontalScrollIndicator={false}
@@ -355,9 +378,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A2E', borderRadius: 16, paddingHorizontal: 20, paddingVertical: 12,
     borderWidth: 1, borderColor: '#FFD700',
   },
-  rewardEmoji: { fontSize: 24, marginRight: 10 },
   rewardTitle: { color: '#FFD700', fontSize: 18, fontWeight: '900' },
+  penaltyLabel: { color: '#FFA726', fontSize: 10, fontWeight: '700' },
   rewardTask: { color: '#aaa', fontSize: 12, maxWidth: 150 },
+  penaltyBar: {
+    flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 8,
+    backgroundColor: '#FF525222', padding: 10, borderRadius: 10,
+  },
+  penaltyBarText: { color: '#FF5252', fontSize: 12, fontWeight: '600', marginLeft: 8 },
   filterContent: { paddingHorizontal: 16, paddingVertical: 8 },
   filterChip: {
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,

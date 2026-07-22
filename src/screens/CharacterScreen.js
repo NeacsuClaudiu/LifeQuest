@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
-import { getLevelInfo, getCharacterStage, UNLOCKABLE_ITEMS } from '../data/CharacterData';
+import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, UNLOCKABLE_ITEMS, EVOLUTION_STAGES } from '../data/CharacterData';
 import { loadData, saveData, KEYS } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import CharacterView from '../components/CharacterView';
@@ -21,14 +21,14 @@ function ShopItem({ item, owned, equipped, onPress, delay }) {
         style={[styles.itemCard, equipped && styles.equippedCard, !owned && styles.lockedCard]}
         onPress={onPress}
       >
-        <Text style={styles.itemIcon}>{item.icon}</Text>
+        <Ionicons name={item.icon} size={28} color={equipped ? '#FFD700' : owned ? '#4CAF50' : '#666'} />
         <Text style={[styles.itemName, equipped && styles.equippedText]}>{item.name}</Text>
         {owned ? (
           <Text style={[styles.itemStatus, equipped ? styles.equippedStatus : styles.ownedStatus]}>
             {equipped ? 'EQUIPPED' : 'Tap to equip'}
           </Text>
         ) : (
-          <Text style={styles.lockedStatus}>Lv.{item.minLevel} 🔒</Text>
+          <Text style={styles.lockedStatus}>Lv.{item.minLevel}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -45,6 +45,8 @@ export default function CharacterScreen() {
       c = { ...DEFAULT_CHARACTER };
       await saveData(KEYS.CHARACTER, c);
     }
+    c = processDayCheck(c);
+    await saveData(KEYS.CHARACTER, c);
     setCharacter(c);
   }, []));
 
@@ -83,7 +85,8 @@ export default function CharacterScreen() {
   }
 
   const levelInfo = getLevelInfo(character.level);
-  const stage = getCharacterStage(character.level);
+  const stage = getEvolutionStage(character.evolutionStage || 0);
+  const stageColor = getEvolutionColor(character.evolutionStage || 0);
 
   const allItems = UNLOCKABLE_ITEMS.filter(i => {
     if (activeTab === 'customize') return true;
@@ -103,19 +106,42 @@ export default function CharacterScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <LinearGradient colors={[stage.color + '33', '#0D0D1A']} style={styles.heroGradient}>
+      <LinearGradient colors={[stageColor + '33', '#0D0D1A']} style={styles.heroGradient}>
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.hero}>
           <CharacterView character={character} size="large" />
           <TouchableOpacity onPress={renameCharacter} style={styles.nameWrap}>
             <Text style={styles.charName}>{character.name || 'Hero'}</Text>
             <Text style={styles.tapRename}>tap to rename</Text>
           </TouchableOpacity>
-          <View style={styles.levelBadge}>
+          <View style={[styles.levelBadge, { backgroundColor: stageColor }]}>
             <Text style={styles.levelBadgeText}>Lv.{character.level} {levelInfo.title}</Text>
           </View>
-          <Text style={styles.stageText}>{stage.label} Evolution</Text>
+          <Text style={[styles.stageText, { color: stageColor }]}>{stage.name} Evolution</Text>
+          <Text style={styles.stageDesc}>{stage.description}</Text>
         </Animated.View>
       </LinearGradient>
+
+      <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.evoTrack}>
+        <Text style={styles.evoTrackTitle}>Evolution Journey</Text>
+        <View style={styles.evoRow}>
+          {EVOLUTION_STAGES.map((s, i) => (
+            <View key={s.id} style={styles.evoNodeWrap}>
+              <View style={[
+                styles.evoNode,
+                { backgroundColor: i <= (character.evolutionStage || 0) ? stageColor : '#2A2A3E' },
+                i === (character.evolutionStage || 0) && styles.evoNodeActive,
+              ]}>
+                <Text style={[styles.evoNodeNum, i <= (character.evolutionStage || 0) && { color: '#0D0D1A' }]}>
+                  {i}
+                </Text>
+              </View>
+              <Text style={[styles.evoNodeLabel, i === (character.evolutionStage || 0) && { color: stageColor }]}>
+                {s.name}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsCard}>
         <Text style={styles.statsTitle}>Stats</Text>
@@ -178,13 +204,26 @@ const styles = StyleSheet.create({
   nameWrap: { alignItems: 'center', marginTop: 12 },
   charName: { color: '#fff', fontSize: 28, fontWeight: '900' },
   tapRename: { color: '#555', fontSize: 11, marginTop: 2 },
-  levelBadge: {
-    backgroundColor: '#FFD700', borderRadius: 20, paddingHorizontal: 20, paddingVertical: 6, marginTop: 12,
-  },
+  levelBadge: { borderRadius: 20, paddingHorizontal: 20, paddingVertical: 6, marginTop: 12 },
   levelBadgeText: { color: '#0D0D1A', fontWeight: '900', fontSize: 14 },
-  stageText: { color: '#888', fontSize: 11, marginTop: 8, textTransform: 'uppercase', letterSpacing: 3 },
+  stageText: { fontSize: 11, marginTop: 8, textTransform: 'uppercase', letterSpacing: 3 },
+  stageDesc: { color: '#666', fontSize: 12, marginTop: 4 },
+  evoTrack: {
+    backgroundColor: '#1A1A2E', marginHorizontal: 16, borderRadius: 20, padding: 16, marginTop: 12,
+    borderWidth: 1, borderColor: '#2A2A3E',
+  },
+  evoTrackTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
+  evoRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  evoNodeWrap: { alignItems: 'center', width: 36 },
+  evoNode: {
+    width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: '#2A2A3E',
+  },
+  evoNodeActive: { borderColor: '#fff', transform: [{ scale: 1.1 }] },
+  evoNodeNum: { color: '#666', fontSize: 10, fontWeight: '700' },
+  evoNodeLabel: { color: '#555', fontSize: 7, marginTop: 4, textAlign: 'center' },
   statsCard: {
-    backgroundColor: '#1A1A2E', marginHorizontal: 16, borderRadius: 20, padding: 20, marginTop: 8,
+    backgroundColor: '#1A1A2E', marginHorizontal: 16, borderRadius: 20, padding: 20, marginTop: 12,
     borderWidth: 1, borderColor: '#2A2A3E',
   },
   statsTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 14 },
@@ -210,8 +249,7 @@ const styles = StyleSheet.create({
   },
   equippedCard: { borderColor: '#FFD700', backgroundColor: '#2A2A1E' },
   lockedCard: { opacity: 0.4 },
-  itemIcon: { fontSize: 36, marginBottom: 8 },
-  itemName: { color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  itemName: { color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 8 },
   itemStatus: { fontSize: 10, marginTop: 6, fontWeight: '600' },
   equippedStatus: { color: '#FFD700' },
   ownedStatus: { color: '#4CAF50' },
