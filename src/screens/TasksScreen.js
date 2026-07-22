@@ -13,6 +13,7 @@ import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import TaskCard from '../components/TaskCard';
 import ConfettiOverlay from '../components/ConfettiOverlay';
 import AchievementToast from '../components/AchievementToast';
+import { useTheme } from '../context/ThemeContext';
 
 const CATEGORY_ASSETS = {
   phone_detox: require('../../assets/categories/phone_detox.png'),
@@ -28,6 +29,7 @@ const CATEGORY_ASSETS = {
 };
 
 export default function TasksScreen() {
+  const { colors } = useTheme();
   const [tasks, setTasks] = useState([]);
   const [character, setCharacter] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -189,12 +191,12 @@ export default function TasksScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         {rewardPopup && (
-          <Animated.View entering={FadeIn} style={[styles.rewardPopup, penalty > 0 && { borderColor: '#FFA726' }]}>
-            <Ionicons name="flash" size={24} color="#FFD700" />
+          <Animated.View entering={FadeIn} style={[styles.rewardPopup, { backgroundColor: colors.cardBg }, penalty > 0 && { borderColor: '#FFA726' }]}>
+            <Ionicons name="flash" size={24} color={colors.accent} />
             <View>
-              <Text style={styles.rewardTitle}>+{rewardPopup.xp} XP</Text>
+              <Text style={[styles.rewardTitle, { color: colors.accent }]}>+{rewardPopup.xp} XP</Text>
               {penalty > 0 && (
                 <Text style={styles.penaltyLabel}>-{Math.round(penalty * 100)}% penalty applied</Text>
               )}
@@ -207,7 +209,7 @@ export default function TasksScreen() {
           ListHeaderComponent={
             <>
               <Animated.View entering={FadeInDown.delay(100).springify()}>
-                <Text style={styles.screenTitle}>Quests</Text>
+                <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>Quests</Text>
               </Animated.View>
 
               {penalty > 0 && (
@@ -226,12 +228,13 @@ export default function TasksScreen() {
                   contentContainerStyle={styles.filterContent}
                   renderItem={({ item: d }) => (
                     <TouchableOpacity
-                      style={[styles.filterChip, filterDifficulty === d && {
-                        backgroundColor: d === 'all' ? '#FFD700' : DIFFICULTIES[d].color,
+                      style={[styles.filterChip, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }, filterDifficulty === d && {
+                        backgroundColor: d === 'all' ? colors.accent : DIFFICULTIES[d].color,
+                        borderColor: d === 'all' ? colors.accent : DIFFICULTIES[d].color,
                       }]}
                       onPress={() => { Haptics.selectionAsync(); setFilterDifficulty(d); }}
                     >
-                      <Text style={[styles.filterText, filterDifficulty === d && styles.filterTextActive]}>
+                      <Text style={[styles.filterText, { color: colors.textSecondary }, filterDifficulty === d && { color: colors.textPrimary }]}>
                         {d === 'all' ? 'ALL' : DIFFICULTIES[d].label}
                       </Text>
                     </TouchableOpacity>
@@ -240,7 +243,7 @@ export default function TasksScreen() {
               </Animated.View>
 
               {activeTasks.length > 0 && (
-                <Animated.Text entering={FadeIn.delay(300)} style={styles.sectionLabel}>
+                <Animated.Text entering={FadeIn.delay(300)} style={[styles.sectionLabel, { color: colors.textMuted }]}>
                   Active ({activeTasks.length})
                 </Animated.Text>
               )}
@@ -255,15 +258,15 @@ export default function TasksScreen() {
           )}
           ListEmptyComponent={
             <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.emptyState}>
-              <Ionicons name="rocket-outline" size={48} color="#FFD700" />
-              <Text style={styles.emptyText}>No active tasks</Text>
-              <Text style={styles.emptySubtext}>Tap + to create a quest</Text>
+              <Ionicons name="rocket-outline" size={48} color={colors.accent} />
+              <Text style={[styles.emptyText, { color: colors.textPrimary }]}>No active tasks</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>Tap + to create a quest</Text>
             </Animated.View>
           }
           ListFooterComponent={
             completedTasks.length > 0 ? (
               <>
-                <Animated.Text entering={FadeIn.delay(200)} style={[styles.sectionLabel, { marginTop: 20 }]}>
+                <Animated.Text entering={FadeIn.delay(200)} style={[styles.sectionLabel, { color: colors.textMuted, marginTop: 20 }]}>
                   Completed ({completedTasks.length})
                 </Animated.Text>
                 {completedTasks.slice(0, 10).map(item => (
@@ -275,23 +278,23 @@ export default function TasksScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={async () => {
               setRefreshing(true); await loadAllData(); setRefreshing(false);
-            }} tintColor="#FFD700" />
+            }} tintColor={colors.accent} />
           }
           contentContainerStyle={styles.scrollContent}
         />
 
         <View style={styles.fabRow}>
-          <TouchableOpacity style={styles.fabSecondary} onPress={() => {
+          <TouchableOpacity style={[styles.fabSecondary, { backgroundColor: colors.cardBg, borderColor: colors.accent + '44' }]} onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setShowPresets(true);
           }}>
-            <Ionicons name="list-outline" size={24} color="#FFD700" />
+            <Ionicons name="list-outline" size={24} color={colors.accent} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.fab} onPress={() => {
+          <TouchableOpacity style={[styles.fab, { backgroundColor: colors.accent, shadowColor: colors.accent }]} onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setShowModal(true);
           }}>
-            <Ionicons name="add" size={30} color="#0D0D1A" />
+            <Ionicons name="add" size={30} color={colors.background} />
           </TouchableOpacity>
         </View>
 
@@ -299,48 +302,48 @@ export default function TasksScreen() {
           <BlurView intensity={40} style={styles.modalOverlay}>
             <Animated.View entering={FadeInDown.springify()} style={styles.modal}>
               <View style={styles.modalHandle} />
-              <Text style={styles.modalTitle}>New Quest</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>New Quest</Text>
               <TextInput
                 style={styles.input}
                 placeholder="What's your quest?"
-                placeholderTextColor="#555"
+                placeholderTextColor={colors.textMuted}
                 value={newTitle}
                 onChangeText={setNewTitle}
                 autoFocus
               />
-              <Text style={styles.label}>Category</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Category</Text>
               <FlatList horizontal showsHorizontalScrollIndicator={false} data={CATEGORIES}
                 keyExtractor={c => c.id}
                 renderItem={({ item: cat }) => (
                   <TouchableOpacity
-                    style={[styles.pickerChip, newCategory === cat.id && { backgroundColor: cat.color + '44', borderColor: cat.color }]}
+                    style={[styles.pickerChip, { backgroundColor: colors.cardBorder }, newCategory === cat.id && { backgroundColor: cat.color + '44', borderColor: cat.color }]}
                     onPress={() => { Haptics.selectionAsync(); setNewCategory(cat.id); }}
                   >
-                    <Text style={styles.pickerChipText}>{cat.icon} {cat.label}</Text>
+                    <Text style={[styles.pickerChipText, { color: colors.textPrimary }]}>{cat.icon} {cat.label}</Text>
                   </TouchableOpacity>
                 )}
               />
-              <Text style={styles.label}>Difficulty</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Difficulty</Text>
               <View style={styles.diffRow}>
                 {Object.entries(DIFFICULTIES).map(([key, val]) => (
                   <TouchableOpacity
                     key={key}
-                    style={[styles.diffChip, newDifficulty === key && { backgroundColor: val.color + '44', borderColor: val.color }]}
+                    style={[styles.diffChip, { backgroundColor: colors.cardBorder }, newDifficulty === key && { backgroundColor: val.color + '44', borderColor: val.color }]}
                     onPress={() => { Haptics.selectionAsync(); setNewDifficulty(key); }}
                   >
-                    <Text style={[styles.diffChipText, newDifficulty === key && { color: val.color }]}>
+                    <Text style={[styles.diffChipText, { color: colors.textPrimary }, newDifficulty === key && { color: val.color }]}>
                       {val.icon} {val.label}
                     </Text>
-                    <Text style={styles.diffXp}>+{val.xp} XP</Text>
+                    <Text style={[styles.diffXp, { color: colors.accent }]}>+{val.xp} XP</Text>
                   </TouchableOpacity>
                 ))}
               </View>
               <View style={styles.modalActions}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowModal(false)}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                  <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.addBtn} onPress={addTask}>
-                  <Text style={styles.addText}>Add Quest</Text>
+                  <Text style={[styles.addText, { color: colors.background }]}>Add Quest</Text>
                 </TouchableOpacity>
               </View>
             </Animated.View>
@@ -351,28 +354,28 @@ export default function TasksScreen() {
           <BlurView intensity={40} style={styles.modalOverlay}>
             <Animated.View entering={FadeInDown.springify()} style={styles.modal}>
               <View style={styles.modalHandle} />
-              <Text style={styles.modalTitle}>Quick Add Quests</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Quick Add Quests</Text>
               <FlatList data={PRESET_TASKS} keyExtractor={(item, i) => i.toString()}
                 renderItem={({ item, index }) => (
                   <Animated.View entering={FadeInDown.delay(index * 30).springify()}>
                     <TouchableOpacity style={styles.presetItem} onPress={() => addPresetTask(item)}>
-                      <View style={[styles.presetIconWrap, { backgroundColor: (CATEGORIES.find(c => c.id === item.category)?.color || '#666') + '22' }]}>
+                      <View style={[styles.presetIconWrap, { backgroundColor: (CATEGORIES.find(c => c.id === item.category)?.color || colors.textSecondary) + '22' }]}>
                         <Image source={CATEGORY_ASSETS[item.category]} style={{ width: 28, height: 28 }} />
                       </View>
                       <View style={styles.presetInfo}>
-                        <Text style={styles.presetTitle}>{item.title}</Text>
-                        <Text style={styles.presetMeta}>
+                        <Text style={[styles.presetTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+                        <Text style={[styles.presetMeta, { color: colors.textMuted }]}>
                           {DIFFICULTIES[item.difficulty].label} · +{DIFFICULTIES[item.difficulty].xp} XP
                         </Text>
                       </View>
-                      <Ionicons name="add-circle" size={28} color="#FFD700" />
+                      <Ionicons name="add-circle" size={28} color={colors.accent} />
                     </TouchableOpacity>
                   </Animated.View>
                 )}
                 style={{ maxHeight: 400 }}
               />
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowPresets(false)}>
-                <Text style={styles.cancelText}>Close</Text>
+                  <Text style={[styles.cancelText, { color: colors.textMuted }]}>Close</Text>
               </TouchableOpacity>
             </Animated.View>
           </BlurView>

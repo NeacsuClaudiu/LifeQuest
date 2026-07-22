@@ -8,20 +8,22 @@ import { ACHIEVEMENTS, getLevelInfo, checkAchievements, getUnlockedAchievements 
 import { loadData, saveData, KEYS, logAchievement, getRecentAchievements } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import ConfettiOverlay from '../components/ConfettiOverlay';
+import { useTheme } from '../context/ThemeContext';
 
 function AchievementCard({ achievement, progress, progressLabel, unlocked, color, delay }) {
+  const { colors } = useTheme();
   return (
     <Animated.View
       entering={FadeInDown.delay(delay).springify()}
       layout={Layout.springify()}
-      style={[styles.achCard, unlocked && { borderColor: color }]}
+      style={[styles.achCard, unlocked && { borderColor: color }, { backgroundColor: colors.cardBg, borderColor: unlocked ? color : colors.cardBorder }]}
     >
-      <View style={[styles.achIconWrap, { backgroundColor: unlocked ? color + '22' : '#2A2A3E' }]}>
-        <Ionicons name={achievement.icon} size={24} color={unlocked ? color : '#555'} />
+      <View style={[styles.achIconWrap, { backgroundColor: unlocked ? color + '22' : colors.cardBorder }]}>
+        <Ionicons name={achievement.icon} size={24} color={unlocked ? color : colors.textMuted} />
       </View>
       <View style={styles.achInfo}>
-        <Text style={[styles.achName, unlocked && { color: '#fff' }]}>{achievement.name}</Text>
-        <Text style={styles.achDesc}>{achievement.description}</Text>
+        <Text style={[styles.achName, unlocked && { color: colors.textPrimary }]}>{achievement.name}</Text>
+        <Text style={[styles.achDesc, { color: colors.textMuted }]}>{achievement.description}</Text>
         {unlocked ? (
           <View style={styles.unlockedBadge}>
             <Ionicons name="checkmark-circle" size={12} color={color} />
@@ -29,10 +31,10 @@ function AchievementCard({ achievement, progress, progressLabel, unlocked, color
           </View>
         ) : (
           <View style={styles.progressRow}>
-            <View style={styles.progressBar}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
               <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: color + '88' }]} />
             </View>
-            <Text style={styles.progressLabel}>{progressLabel}</Text>
+            <Text style={[styles.progressLabel, { color: colors.textMuted }]}>{progressLabel}</Text>
           </View>
         )}
       </View>
@@ -101,6 +103,7 @@ export default function AchievementsScreen() {
   const [tasks, setTasks] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [confetti, setConfetti] = useState(false);
+  const { colors } = useTheme();
 
   useFocusEffect(useCallback(async () => {
     const c = await loadData(KEYS.CHARACTER);
@@ -128,8 +131,8 @@ export default function AchievementsScreen() {
 
   if (!character) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.loadingText}>Loading achievements...</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.loadingText, { color: colors.accent }]}>Loading achievements...</Text>
       </View>
     );
   }
@@ -152,32 +155,32 @@ export default function AchievementsScreen() {
   const percentComplete = (unlockedCount / totalCount) * 100;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.header}>
-          <Ionicons name="trophy" size={28} color="#FFD700" />
-          <Text style={styles.headerTitle}>Achievements</Text>
+          <Ionicons name="trophy" size={28} color={colors.accent} />
+          <Text style={[styles.headerTitle, { color: colors.accent }]}>Achievements</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.overviewCard}>
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.overviewCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.overviewRow}>
             <View style={styles.overviewStat}>
-              <Text style={styles.overviewValue}>{unlockedCount}</Text>
-              <Text style={styles.overviewLabel}>Unlocked</Text>
+              <Text style={[styles.overviewValue, { color: colors.accent }]}>{unlockedCount}</Text>
+              <Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>Unlocked</Text>
             </View>
-            <View style={styles.overviewDivider} />
+            <View style={[styles.overviewDivider, { backgroundColor: colors.cardBorder }]} />
             <View style={styles.overviewStat}>
-              <Text style={styles.overviewValue}>{totalCount}</Text>
-              <Text style={styles.overviewLabel}>Total</Text>
+              <Text style={[styles.overviewValue, { color: colors.accent }]}>{totalCount}</Text>
+              <Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>Total</Text>
             </View>
-            <View style={styles.overviewDivider} />
+            <View style={[styles.overviewDivider, { backgroundColor: colors.cardBorder }]} />
             <View style={styles.overviewStat}>
-              <Text style={styles.overviewValue}>{Math.round(percentComplete)}%</Text>
-              <Text style={styles.overviewLabel}>Complete</Text>
+              <Text style={[styles.overviewValue, { color: colors.accent }]}>{Math.round(percentComplete)}%</Text>
+              <Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>Complete</Text>
             </View>
           </View>
-          <View style={styles.overviewBar}>
-            <View style={[styles.overviewBarFill, { width: `${percentComplete}%` }]} />
+          <View style={[styles.overviewBar, { backgroundColor: colors.cardBorder }]}>
+            <View style={[styles.overviewBarFill, { width: `${percentComplete}%`, backgroundColor: colors.accent }]} />
           </View>
         </Animated.View>
 
@@ -185,11 +188,11 @@ export default function AchievementsScreen() {
           {filterOptions.map((f) => (
             <TouchableOpacity
               key={f.key}
-              style={[styles.filterChip, activeFilter === f.key && styles.filterChipActive]}
+              style={[styles.filterChip, activeFilter === f.key && styles.filterChipActive, { backgroundColor: activeFilter === f.key ? colors.accent : colors.cardBg, borderColor: activeFilter === f.key ? colors.accent : colors.cardBorder }]}
               onPress={() => { Haptics.selectionAsync(); setActiveFilter(f.key); }}
             >
-              <Ionicons name={f.icon} size={14} color={activeFilter === f.key ? '#0D0D1A' : '#666'} />
-              <Text style={[styles.filterText, activeFilter === f.key && styles.filterTextActive]}>
+              <Ionicons name={f.icon} size={14} color={activeFilter === f.key ? colors.background : colors.textSecondary} />
+              <Text style={[styles.filterText, activeFilter === f.key && styles.filterTextActive, { color: activeFilter === f.key ? colors.background : colors.textSecondary }]}>
                 {f.label}
               </Text>
             </TouchableOpacity>
@@ -198,7 +201,7 @@ export default function AchievementsScreen() {
 
         {filteredAchievements.map((achievement, i) => {
           const unlocked = unlockedIds.includes(achievement.id);
-          const color = unlocked ? '#FFD700' : '#666';
+          const color = unlocked ? colors.accent : colors.textSecondary;
           const progressInfo = unlocked
             ? { progress: 100, label: 'Done!' }
             : getAchievementProgress(achievement, character, tasks);

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,47 +13,48 @@ import CharacterView from '../components/CharacterView';
 import XPBar from '../components/XPBar';
 import TaskCard from '../components/TaskCard';
 import DailyReward from '../components/DailyReward';
+import { useTheme } from '../context/ThemeContext';
 
-function StatCard({ label, value, iconName, color, delay }) {
+function StatCard({ label, value, iconName, color, delay, colors }) {
   return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[styles.statCard, { borderColor: color + '44' }]}>
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[styles.statCard, { borderColor: color + '44', backgroundColor: colors.cardBg }]}>
       <Ionicons name={iconName} size={22} color={color} />
       <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </Animated.View>
   );
 }
 
-function MiniCard({ icon, iconColor, title, subtitle, progress, progressColor, delay }) {
+function MiniCard({ icon, iconColor, title, subtitle, progress, progressColor, delay, colors }) {
   return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.miniCard}>
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[styles.miniCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
       <View style={styles.miniHeader}>
-        <View style={styles.miniIconWrap}>
+        <View style={[styles.miniIconWrap, { backgroundColor: colors.cardBorder }]}>
           <Ionicons name={icon} size={16} color={iconColor} />
         </View>
-        <Text style={styles.miniTitle}>{title}</Text>
+        <Text style={[styles.miniTitle, { color: colors.textPrimary }]}>{title}</Text>
       </View>
       {progress !== undefined && (
-        <View style={styles.miniBarOuter}>
+        <View style={[styles.miniBarOuter, { backgroundColor: colors.cardBorder }]}>
           <View style={[styles.miniBarFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: progressColor }]} />
         </View>
       )}
-      {subtitle && <Text style={styles.miniSub}>{subtitle}</Text>}
+      {subtitle && <Text style={[styles.miniSub, { color: colors.textSecondary }]}>{subtitle}</Text>}
     </Animated.View>
   );
 }
 
-function AchievementRow({ icon, iconColor, title, subtitle, delay, isNew }) {
+function AchievementRow({ icon, iconColor, title, subtitle, delay, isNew, colors }) {
   return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.achievementRow}>
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[styles.achievementRow, { borderBottomColor: colors.cardBorder }]}>
       <View style={[styles.achievementIcon, { backgroundColor: iconColor + '22' }]}>
         <Ionicons name={icon} size={18} color={iconColor} />
       </View>
       <View style={styles.achievementInfo}>
-        <Text style={styles.achievementTitle}>{title}</Text>
-        <Text style={styles.achievementSub}>{subtitle}</Text>
+        <Text style={[styles.achievementTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={[styles.achievementSub, { color: colors.textSecondary }]}>{subtitle}</Text>
       </View>
-      {isNew && <View style={styles.newBadge}><Text style={styles.newBadgeText}>NEW</Text></View>}
+      {isNew && <View style={[styles.newBadge, { backgroundColor: colors.accent + '22' }]}><Text style={[styles.newBadgeText, { color: colors.accent }]}>NEW</Text></View>}
     </Animated.View>
   );
 }
@@ -69,6 +70,7 @@ export default function HomeScreen({ navigation }) {
   const [weeklyStats, setWeeklyStats] = useState({ completed: 0, xpEarned: 0 });
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [newAchievements, setNewAchievements] = useState([]);
+  const { colors } = useTheme();
   const quote = getQuoteOfDay();
 
   const loadDataAsync = useCallback(async () => {
@@ -132,8 +134,8 @@ export default function HomeScreen({ navigation }) {
 
   if (!character) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.loadingText}>Start your journey...</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.loadingText, { color: colors.accent }]}>Start your journey...</Text>
       </View>
     );
   }
@@ -165,18 +167,18 @@ export default function HomeScreen({ navigation }) {
 
   const statsCards = [
     { label: 'Level', value: character.level, iconName: 'star', color: '#FFD700' },
-    { label: 'Tasks Done', value: totalTasks, iconName: 'checkmark-done-circle', color: '#4CAF50' },
+    { label: 'Tasks Done', value: totalTasks, iconName: 'checkmark-done-circle', color: colors.accent },
     { label: 'Streak', value: `${streak}d`, iconName: 'flame', color: '#FF5722' },
-    { label: 'XP', value: character.totalXpEarned || 0, iconName: 'flash', color: '#A78BFA' },
+    { label: 'XP', value: character.totalXpEarned || 0, iconName: 'flash', color: colors.accentSecondary },
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         ListHeaderComponent={
           <>
             <LinearGradient
-              colors={[stageColor + '22', '#0D0D1A00']}
+              colors={[stageColor + '22', colors.background + '00']}
               style={styles.heroGradient}
             >
               <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.hero}>
@@ -185,9 +187,9 @@ export default function HomeScreen({ navigation }) {
                   <Text style={[styles.stageName, { color: stageColor }]}>
                     {stage.name} ({character.evolutionStage || 0}/7)
                   </Text>
-                  <Text style={styles.heroTitle}>{character.name || 'Hero'}</Text>
-                  <View style={styles.titlePill}>
-                    <Text style={styles.titlePillText}>{levelInfo.title}</Text>
+                  <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>{character.name || 'Hero'}</Text>
+                  <View style={[styles.titlePill, { backgroundColor: colors.accent + '22' }]}>
+                    <Text style={[styles.titlePillText, { color: colors.accent }]}>{levelInfo.title}</Text>
                   </View>
                   <View style={styles.goldBadge}>
                     <Ionicons name="cash" size={12} color="#FF9800" />
@@ -207,15 +209,15 @@ export default function HomeScreen({ navigation }) {
               />
             </Animated.View>
 
-            <Animated.View entering={FadeInUp.delay(250).springify()} style={styles.evoCard}>
+            <Animated.View entering={FadeInUp.delay(250).springify()} style={[styles.evoCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
               <View style={styles.evoHeader}>
                 <Ionicons name="leaf" size={16} color={stageColor} />
                 <Text style={[styles.evoTitle, { color: stageColor }]}>Evolution Progress</Text>
               </View>
-              <View style={styles.evoBarOuter}>
+              <View style={[styles.evoBarOuter, { backgroundColor: colors.cardBorder }]}>
                 <View style={[styles.evoBarFill, { width: `${progressPercent}%`, backgroundColor: stageColor }]} />
               </View>
-              <Text style={styles.evoSub}>
+              <Text style={[styles.evoSub, { color: colors.textSecondary }]}>
                 {character.evolutionStage || 0} of {maxStages} stages | {stage.description}
               </Text>
               {daysSinceActive > 0 && (
@@ -230,12 +232,12 @@ export default function HomeScreen({ navigation }) {
 
             <DailyReward character={character} onClaim={handleClaimReward} />
 
-            <Animated.View entering={FadeInDown.delay(260).springify()} style={styles.quoteCard}>
+            <Animated.View entering={FadeInDown.delay(260).springify()} style={[styles.quoteCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
               <View style={styles.quoteIconWrap}>
-                <Ionicons name="chatbubble-ellipses" size={14} color="#A78BFA" />
+                <Ionicons name="chatbubble-ellipses" size={14} color={colors.accentSecondary} />
               </View>
-              <Text style={styles.quoteText}>"{quote.text}"</Text>
-              <Text style={styles.quoteAuthor}>- {quote.author}</Text>
+              <Text style={[styles.quoteText, { color: colors.accentSecondary }]}>"{quote.text}"</Text>
+              <Text style={[styles.quoteAuthor, { color: colors.textSecondary }]}>- {quote.author}</Text>
             </Animated.View>
 
             <View style={styles.progressRow}>
@@ -247,27 +249,30 @@ export default function HomeScreen({ navigation }) {
                 progress={dailyProgress}
                 progressColor="#4CAF50"
                 delay={300}
+                colors={colors}
               />
               <MiniCard
                 icon="calendar"
-                iconColor="#2196F3"
+                iconColor={colors.info}
                 title="Weekly"
                 subtitle={`${weeklyStats.completed} completed`}
                 progress={weeklyPercent}
-                progressColor="#2196F3"
+                progressColor={colors.info}
                 delay={330}
+                colors={colors}
               />
             </View>
 
             <View style={styles.progressRow}>
               <MiniCard
                 icon="trending-up"
-                iconColor="#FFD700"
+                iconColor={colors.accent}
                 title="XP to Next Level"
                 subtitle={`${xpForNext > 0 ? xpForNext : 0} XP to Level ${levelInfo.level + 1}`}
                 progress={xpPercent}
-                progressColor="#FFD700"
+                progressColor={colors.accent}
                 delay={360}
+                colors={colors}
               />
               <MiniCard
                 icon="flame"
@@ -277,37 +282,38 @@ export default function HomeScreen({ navigation }) {
                 progress={Math.min((streak / 7) * 100, 100)}
                 progressColor="#FF5722"
                 delay={390}
+                colors={colors}
               />
             </View>
 
             {topPriorityTask && (() => {
               const diff = DIFFICULTIES[topPriorityTask.difficulty];
               return (
-                <Animated.View entering={FadeInDown.delay(420).springify()} style={[styles.priorityCard, { borderLeftColor: diff?.color || '#FFD700' }]}>
+                <Animated.View entering={FadeInDown.delay(420).springify()} style={[styles.priorityCard, { borderLeftColor: diff?.color || colors.accent, backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
                   <View style={styles.priorityHeader}>
-                    <Ionicons name="flag" size={16} color={diff?.color || '#FFD700'} />
-                    <Text style={styles.priorityLabel}>Top Priority</Text>
+                    <Ionicons name="flag" size={16} color={diff?.color || colors.accent} />
+                    <Text style={[styles.priorityLabel, { color: colors.textMuted }]}>Top Priority</Text>
                   </View>
-                  <Text style={styles.priorityTitle}>{topPriorityTask.title}</Text>
+                  <Text style={[styles.priorityTitle, { color: colors.textPrimary }]}>{topPriorityTask.title}</Text>
                   <View style={styles.priorityMeta}>
-                    <View style={[styles.priorityDiff, { backgroundColor: (diff?.color || '#FFD700') + '22' }]}>
-                      <Text style={[styles.priorityDiffText, { color: diff?.color || '#FFD700' }]}>{diff?.label || 'Task'}</Text>
+                    <View style={[styles.priorityDiff, { backgroundColor: (diff?.color || colors.accent) + '22' }]}>
+                      <Text style={[styles.priorityDiffText, { color: diff?.color || colors.accent }]}>{diff?.label || 'Task'}</Text>
                     </View>
-                    <Text style={styles.priorityXp}>+{diff?.xp || 0} XP</Text>
+                    <Text style={[styles.priorityXp, { color: colors.accent }]}>+{diff?.xp || 0} XP</Text>
                   </View>
                 </Animated.View>
               );
             })()}
 
             {recentAchievements.length > 0 && (
-              <Animated.View entering={FadeInDown.delay(450).springify()} style={styles.achievementsSection}>
+              <Animated.View entering={FadeInDown.delay(450).springify()} style={[styles.achievementsSection, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
                 <View style={styles.sectionHeaderRow}>
                   <View style={styles.achievementsHeaderLeft}>
-                    <Ionicons name="trophy" size={16} color="#FFD700" />
-                    <Text style={styles.achievementsSectionTitle}>Recent Achievements</Text>
+                    <Ionicons name="trophy" size={16} color={colors.accent} />
+                    <Text style={[styles.achievementsSectionTitle, { color: colors.accent }]}>Recent Achievements</Text>
                   </View>
                   <TouchableOpacity onPress={() => navigation.navigate('Stats')}>
-                    <Text style={styles.achSeeAll}>See All</Text>
+                    <Text style={[styles.achSeeAll, { color: colors.accent }]}>See All</Text>
                   </TouchableOpacity>
                 </View>
                 {recentAchievements.slice(0, 3).map((a, i) => {
@@ -316,11 +322,12 @@ export default function HomeScreen({ navigation }) {
                     <AchievementRow
                       key={a.id}
                       icon={def?.icon || 'star'}
-                      iconColor="#FFD700"
+                      iconColor={colors.accent}
                       title={def?.name || a.id}
                       subtitle={def?.description || ''}
                       delay={460 + i * 40}
                       isNew={newAchievements.some(n => n.id === a.id)}
+                      colors={colors}
                     />
                   );
                 })}
@@ -329,20 +336,20 @@ export default function HomeScreen({ navigation }) {
 
             <View style={styles.statsRow}>
               {statsCards.map((stat, i) => (
-                <StatCard key={i} {...stat} delay={500 + i * 80} />
+                <StatCard key={i} {...stat} delay={500 + i * 80} colors={colors} />
               ))}
             </View>
 
             <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.sectionHeader}>
               <View>
-                <Text style={styles.sectionTitle}>Today's Tasks</Text>
-                <Text style={styles.sectionSub}>{tasks.length} active</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today's Tasks</Text>
+                <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{tasks.length} active</Text>
               </View>
               <TouchableOpacity
-                style={styles.seeAllBtn}
+                style={[styles.seeAllBtn, { backgroundColor: colors.accent + '15' }]}
                 onPress={() => navigation.navigate('Tasks')}
               >
-                <Text style={styles.seeAllText}>See All</Text>
+                <Text style={[styles.seeAllText, { color: colors.accent }]}>See All</Text>
               </TouchableOpacity>
             </Animated.View>
           </>
@@ -354,16 +361,16 @@ export default function HomeScreen({ navigation }) {
             <TaskCard task={item} compact onComplete={() => {}} />
           </Animated.View>
         )}
-        ListEmptyComponent={
-          <Animated.View entering={FadeInDown.delay(700).springify()} style={styles.emptyState}>
-            <View style={styles.emptyCircle}>
-              <Ionicons name="flag-outline" size={36} color="#FFD700" />
-            </View>
-            <Text style={styles.emptyText}>No tasks yet</Text>
-            <Text style={styles.emptySubtext}>Tap Tasks and add your first quest!</Text>
-          </Animated.View>
-        }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFD700" />}
+          ListEmptyComponent={
+            <Animated.View entering={FadeInDown.delay(700).springify()} style={styles.emptyState}>
+              <View style={[styles.emptyCircle, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+                <Ionicons name="flag-outline" size={36} color={colors.accent} />
+              </View>
+              <Text style={[styles.emptyText, { color: colors.textPrimary }]}>No tasks yet</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>Tap Tasks and add your first quest!</Text>
+            </Animated.View>
+          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         contentContainerStyle={styles.scrollContent}
       />
     </View>

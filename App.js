@@ -6,6 +6,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import HomeScreen from './src/screens/HomeScreen';
 import TasksScreen from './src/screens/TasksScreen';
 import CharacterScreen from './src/screens/CharacterScreen';
@@ -46,53 +47,62 @@ function TabBarIcon({ iconName, iconOutline, label, activeColor, focused }) {
   );
 }
 
-export default function App() {
-  return (
-    <>
-      <StatusBar style="light" />
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: styles.tabBar,
-            tabBarShowLabel: false,
-          }}
-        >
-          {TAB_ICONS.map(({ name, icon, iconOutline, activeColor }) => (
-            <Tab.Screen
-              key={name}
-              name={name}
-              component={
-                name === 'Home' ? HomeScreen :
-                name === 'Tasks' ? TasksScreen :
-                name === 'Character' ? CharacterScreen :
-                name === 'Achievements' ? AchievementsScreen :
-                StatsScreen
-              }
-              options={{
-                animation: 'fade',
-                tabBarIcon: ({ focused }) => (
-                  <TabBarIcon iconName={icon} iconOutline={iconOutline} label={name} activeColor={activeColor} focused={focused} />
-                ),
-              }}
-            />
-          ))}
-        </Tab.Navigator>
-      </NavigationContainer>
-    </>
-  );
-}
+function MainNavigator() {
+  const { loaded, colors } = useTheme();
 
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: '#0D0D1A',
-    borderTopColor: '#1A1A2E',
+  const tabBarStyle = {
+    backgroundColor: loaded ? colors.tabBar : '#0D0D1A',
+    borderTopColor: loaded ? colors.tabBorder : '#1A1A2E',
     borderTopWidth: 1,
     height: 72,
     paddingBottom: 8,
     paddingTop: 8,
     elevation: 0,
-  },
+  };
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle,
+        tabBarShowLabel: false,
+      }}
+    >
+      {TAB_ICONS.map(({ name, icon, iconOutline, activeColor }) => (
+        <Tab.Screen
+          key={name}
+          name={name}
+          component={
+            name === 'Home' ? HomeScreen :
+            name === 'Tasks' ? TasksScreen :
+            name === 'Character' ? CharacterScreen :
+            name === 'Achievements' ? AchievementsScreen :
+            StatsScreen
+          }
+          options={{
+            animation: 'fade',
+            tabBarIcon: ({ focused }) => (
+              <TabBarIcon iconName={icon} iconOutline={iconOutline} label={name} activeColor={activeColor} focused={focused} />
+            ),
+          }}
+        />
+      ))}
+    </Tab.Navigator>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <StatusBar style="light" />
+      <NavigationContainer>
+        <MainNavigator />
+      </NavigationContainer>
+    </ThemeProvider>
+  );
+}
+
+const styles = StyleSheet.create({
   tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 60 },
   tabLabel: { fontSize: 10, marginTop: 4, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   activeDot: { width: 4, height: 4, borderRadius: 2, marginTop: 4 },

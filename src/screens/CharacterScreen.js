@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,25 +10,27 @@ import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, UN
 import { loadData, saveData, KEYS } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import CharacterView from '../components/CharacterView';
+import { THEMES, isThemePurchased, canAffordTheme, purchaseTheme } from '../data/Themes';
+import { useTheme } from '../context/ThemeContext';
 
-function ShopItem({ item, owned, equipped, onPress, delay }) {
+function ShopItem({ item, owned, equipped, onPress, delay, colors }) {
   return (
     <Animated.View
       entering={FadeInDown.delay(delay).springify()}
       layout={Layout.springify()}
     >
       <TouchableOpacity
-        style={[styles.itemCard, equipped && styles.equippedCard, !owned && styles.lockedCard]}
+        style={[styles.itemCard, { backgroundColor: colors.cardBg, borderColor: equipped ? colors.accent : colors.cardBorder }, equipped && styles.equippedCard, !owned && styles.lockedCard]}
         onPress={onPress}
       >
-        <Ionicons name={item.icon} size={28} color={equipped ? '#FFD700' : owned ? '#4CAF50' : '#666'} />
-        <Text style={[styles.itemName, equipped && styles.equippedText]}>{item.name}</Text>
+        <Ionicons name={item.icon} size={28} color={equipped ? colors.accent : owned ? colors.success : colors.textMuted} />
+        <Text style={[styles.itemName, { color: colors.textPrimary }, equipped && { color: colors.accent }]}>{item.name}</Text>
         {owned ? (
-          <Text style={[styles.itemStatus, equipped ? styles.equippedStatus : styles.ownedStatus]}>
+          <Text style={[styles.itemStatus, { color: equipped ? colors.accent : colors.success }]}>
             {equipped ? 'EQUIPPED' : 'Tap to equip'}
           </Text>
         ) : (
-          <Text style={styles.lockedStatus}>Lv.{item.minLevel}</Text>
+          <Text style={[styles.lockedStatus, { color: colors.danger }]}>Lv.{item.minLevel}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -38,6 +40,7 @@ function ShopItem({ item, owned, equipped, onPress, delay }) {
 export default function CharacterScreen() {
   const [character, setCharacter] = useState(null);
   const [activeTab, setActiveTab] = useState('customize');
+  const { colors, refreshTheme, setThemeId } = useTheme();
 
   useFocusEffect(useCallback(async () => {
     let c = await loadData(KEYS.CHARACTER);
@@ -81,7 +84,7 @@ export default function CharacterScreen() {
   };
 
   if (!character) {
-    return <View style={styles.center}><Text style={styles.loadingText}>Loading...</Text></View>;
+    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={[styles.loadingText, { color: colors.accent }]}>Loading...</Text></View>;
   }
 
   const levelInfo = getLevelInfo(character.level);
@@ -99,6 +102,7 @@ export default function CharacterScreen() {
 
   const allItems = UNLOCKABLE_ITEMS.filter(i => {
     if (activeTab === 'customize') return true;
+    if (activeTab === 'themes') return false;
     if (activeTab === 'hats') return i.type === 'hat';
     if (activeTab === 'accessories') return i.type === 'accessory';
     if (activeTab === 'auras') return i.type === 'aura';
@@ -114,53 +118,53 @@ export default function CharacterScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <LinearGradient colors={[stageColor + '33', '#0D0D1A']} style={styles.heroGradient}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent}>
+      <LinearGradient colors={[stageColor + '33', colors.background]} style={styles.heroGradient}>
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.hero}>
           <CharacterView character={character} size="large" />
           <TouchableOpacity onPress={renameCharacter} style={styles.nameWrap}>
-            <Text style={styles.charName}>{character.name || 'Hero'}</Text>
-            <Text style={styles.tapRename}>tap to rename</Text>
+            <Text style={[styles.charName, { color: colors.textPrimary }]}>{character.name || 'Hero'}</Text>
+            <Text style={[styles.tapRename, { color: colors.textMuted }]}>tap to rename</Text>
           </TouchableOpacity>
           <View style={[styles.levelBadge, { backgroundColor: stageColor }]}>
             <Text style={styles.levelBadgeText}>Lv.{character.level} {levelInfo.title}</Text>
           </View>
           <Text style={[styles.stageText, { color: stageColor }]}>{stage.name} Evolution</Text>
-          <Text style={styles.stageDesc}>{stage.description}</Text>
+          <Text style={[styles.stageDesc, { color: colors.textSecondary }]}>{stage.description}</Text>
         </Animated.View>
       </LinearGradient>
 
-      <Animated.View entering={FadeInDown.delay(120).springify()} style={styles.elementSection}>
-        <Text style={styles.elementTitle}>Choose Element</Text>
+      <Animated.View entering={FadeInDown.delay(120).springify()} style={[styles.elementSection, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+        <Text style={[styles.elementTitle, { color: colors.textPrimary }]}>Choose Element</Text>
         <View style={styles.elementRow}>
           {Object.values(ELEMENTS).map((el) => (
             <TouchableOpacity
               key={el.id}
-              style={[styles.elementBtn, currentElement === el.id && { backgroundColor: el.color + '33', borderColor: el.color }]}
+              style={[styles.elementBtn, { backgroundColor: colors.cardBorder, borderColor: colors.cardBorder }, currentElement === el.id && { backgroundColor: el.color + '33', borderColor: el.color }]}
               onPress={() => switchElement(el.id)}
             >
-              <Ionicons name={el.icon} size={20} color={currentElement === el.id ? el.color : '#666'} />
-              <Text style={[styles.elementBtnText, currentElement === el.id && { color: el.color }]}>{el.name}</Text>
+              <Ionicons name={el.icon} size={20} color={currentElement === el.id ? el.color : colors.textMuted} />
+              <Text style={[styles.elementBtnText, { color: currentElement === el.id ? el.color : colors.textMuted }]}>{el.name}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.evoTrack}>
-        <Text style={styles.evoTrackTitle}>{elementData.name} Evolution</Text>
+      <Animated.View entering={FadeInDown.delay(150).springify()} style={[styles.evoTrack, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+        <Text style={[styles.evoTrackTitle, { color: colors.textPrimary }]}>{elementData.name} Evolution</Text>
         <View style={styles.evoRow}>
           {elementData.stages.map((s, i) => (
             <View key={s.id} style={styles.evoNodeWrap}>
               <View style={[
                 styles.evoNode,
-                { backgroundColor: i <= (character.evolutionStage || 0) ? stageColor : '#2A2A3E' },
+                { backgroundColor: i <= (character.evolutionStage || 0) ? stageColor : colors.cardBorder, borderColor: colors.cardBorder },
                 i === (character.evolutionStage || 0) && styles.evoNodeActive,
               ]}>
-                <Text style={[styles.evoNodeNum, i <= (character.evolutionStage || 0) && { color: '#0D0D1A' }]}>
+                <Text style={[styles.evoNodeNum, i <= (character.evolutionStage || 0) && { color: colors.background }]}>
                   {i}
                 </Text>
               </View>
-              <Text style={[styles.evoNodeLabel, i === (character.evolutionStage || 0) && { color: stageColor }]}>
+              <Text style={[styles.evoNodeLabel, i === (character.evolutionStage || 0) ? { color: stageColor } : { color: colors.textMuted }]}>
                 {s.name}
               </Text>
             </View>
@@ -168,13 +172,13 @@ export default function CharacterScreen() {
         </View>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsCard}>
-        <Text style={styles.statsTitle}>Stats</Text>
+      <Animated.View entering={FadeInDown.delay(200).springify()} style={[styles.statsCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+        <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>Stats</Text>
         {stats.map((stat, i) => (
           <View key={stat.label} style={styles.statRow}>
             <Ionicons name={stat.icon} size={16} color={stat.color} style={{ width: 30 }} />
-            <Text style={styles.statLabel}>{stat.label}</Text>
-            <View style={styles.statBarBg}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
+            <View style={[styles.statBarBg, { backgroundColor: colors.cardBorder }]}>
               <View style={[styles.statBarFill, {
                 width: `${Math.min(stat.value * 5, 100)}%`,
                 backgroundColor: stat.color,
@@ -186,34 +190,96 @@ export default function CharacterScreen() {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.shopSection}>
-        <Text style={styles.sectionTitle}>Cosmetic Shop</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Cosmetic Shop</Text>
 
         <View style={styles.tabRow}>
-          {['customize', 'hats', 'accessories', 'auras'].map(tab => (
+          {['customize', 'hats', 'accessories', 'auras', 'themes'].map(tab => (
             <TouchableOpacity
               key={tab}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
+              style={[styles.tab, { backgroundColor: activeTab === tab ? colors.accent : colors.cardBg, borderColor: activeTab === tab ? colors.accent : colors.cardBorder }]}
               onPress={() => { Haptics.selectionAsync(); setActiveTab(tab); }}
             >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+              <Text style={[styles.tabText, { color: activeTab === tab ? colors.buttonText : colors.textMuted }]}>
                 {tab === 'customize' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.shopGrid}>
-          {allItems.map((item, i) => (
-            <ShopItem
-              key={item.id}
-              item={item}
-              owned={character.level >= item.minLevel}
-              equipped={character.customization?.[item.type] === item.id}
-              onPress={() => equipItem(item)}
-              delay={400 + i * 50}
-            />
-          ))}
-        </View>
+        {activeTab === 'themes' ? (
+          <View style={styles.shopGrid}>
+            {THEMES.map((theme, i) => {
+              const owned = isThemePurchased(character, theme.id);
+              const equipped = character.selectedTheme === theme.id;
+              const affordable = canAffordTheme(character, theme);
+              return (
+                <Animated.View key={theme.id} entering={FadeInDown.delay(400 + i * 50).springify()} layout={Layout.springify()} style={{ width: '48%' }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.themeCard,
+                      equipped && styles.themeEquippedCard,
+                      { backgroundColor: colors.cardBg, borderColor: equipped ? theme.colors.accent : colors.cardBorder },
+                    ]}
+                    onPress={async () => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      if (!owned) {
+                        if (!affordable) {
+                          Alert.alert('Not enough Gold', `${theme.name} costs ${theme.cost} gold.`);
+                          return;
+                        }
+                        const updated = purchaseTheme(character, theme.id);
+                        setCharacter(updated);
+                        await saveData(KEYS.CHARACTER, updated);
+                        setThemeId(theme.id);
+                        refreshTheme();
+                      } else if (!equipped) {
+                        const updated = { ...character, selectedTheme: theme.id };
+                        setCharacter(updated);
+                        await saveData(KEYS.CHARACTER, updated);
+                        setThemeId(theme.id);
+                        refreshTheme();
+                      }
+                    }}
+                  >
+                    <View style={[styles.themePreview, { backgroundColor: theme.colors.background }]}>
+                      <View style={[styles.themePreviewCard, { backgroundColor: theme.colors.cardBg, borderColor: theme.colors.cardBorder }]}>
+                        <View style={[styles.themePreviewAccent, { backgroundColor: theme.colors.accent }]} />
+                        <View style={[styles.themePreviewBtn, { backgroundColor: theme.colors.buttonBg }]} />
+                      </View>
+                    </View>
+                    <Text style={[styles.themeName, { color: colors.textPrimary }, equipped && { color: theme.colors.accent }]}>{theme.name}</Text>
+                    <Text style={[styles.themeDesc, { color: colors.textSecondary }]}>{theme.description}</Text>
+                    <View style={styles.themeBadgeRow}>
+                      {owned ? (
+                        <Text style={[styles.themeBadge, equipped ? styles.themeEquippedBadge : styles.themeOwnedBadge]}>
+                          {equipped ? 'ACTIVE' : 'Tap to use'}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.themeBadge, styles.themeCostBadge]}>
+                          <Ionicons name="cash" size={10} color="#FF9800" /> {theme.cost}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.shopGrid}>
+            {allItems.map((item, i) => (
+              <ShopItem
+                key={item.id}
+                item={item}
+                owned={character.level >= item.minLevel}
+                equipped={character.customization?.[item.type] === item.id}
+                onPress={() => equipItem(item)}
+                delay={400 + i * 50}
+                colors={colors}
+              />
+            ))}
+          </View>
+        )}
       </Animated.View>
     </ScrollView>
   );
@@ -290,4 +356,26 @@ const styles = StyleSheet.create({
   equippedStatus: { color: '#FFD700' },
   ownedStatus: { color: '#4CAF50' },
   lockedStatus: { color: '#F44336', fontSize: 11, marginTop: 6, fontWeight: '600' },
+  themeCard: {
+    width: '100%', borderRadius: 20, padding: 14, marginBottom: 12,
+    alignItems: 'center', borderWidth: 2, backgroundColor: '#1A1A2E',
+  },
+  themeEquippedCard: { backgroundColor: '#2A2A1E' },
+  themePreview: {
+    width: '100%', height: 60, borderRadius: 12, overflow: 'hidden',
+    padding: 8, marginBottom: 8, borderWidth: 1, borderColor: '#2A2A3E',
+  },
+  themePreviewCard: {
+    flex: 1, borderRadius: 8, padding: 6, borderWidth: 1,
+    justifyContent: 'space-between',
+  },
+  themePreviewAccent: { height: 6, borderRadius: 3, width: '60%' },
+  themePreviewBtn: { height: 6, borderRadius: 3, width: '40%', marginTop: 3 },
+  themeName: { color: '#fff', fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  themeDesc: { color: '#666', fontSize: 10, marginTop: 2, textAlign: 'center' },
+  themeBadgeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  themeBadge: { fontSize: 10, fontWeight: '700', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, overflow: 'hidden' },
+  themeEquippedBadge: { color: '#FFD700', backgroundColor: '#FFD70022' },
+  themeOwnedBadge: { color: '#4CAF50', backgroundColor: '#4CAF5022' },
+  themeCostBadge: { color: '#FF9800', backgroundColor: '#FF980022' },
 });

@@ -16,6 +16,8 @@ const DEFAULT_CHARACTER = {
   gold: 0,
   lastDailyReward: null,
   dailyRewardStreak: 0,
+  selectedTheme: 'dark',
+  purchasedThemes: [],
   customization: {
     hat: null,
     accessory: null,

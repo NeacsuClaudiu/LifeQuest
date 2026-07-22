@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -12,11 +13,12 @@ import Heatmap from '../components/Heatmap';
 const screenWidth = Dimensions.get('window').width;
 
 function AnimatedCard({ title, iconName, delay, children }) {
+  const { colors } = useTheme();
   return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.card}>
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
       <View style={styles.cardTitleRow}>
-        <Ionicons name={iconName} size={18} color="#FFD700" style={{ marginRight: 8 }} />
-        <Text style={styles.cardTitle}>{title}</Text>
+        <Ionicons name={iconName} size={18} color={colors.accent} style={{ marginRight: 8 }} />
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{title}</Text>
       </View>
       {children}
     </Animated.View>
@@ -24,18 +26,20 @@ function AnimatedCard({ title, iconName, delay, children }) {
 }
 
 function StatBadge({ icon, value, label, color, delay }) {
+  const { colors } = useTheme();
   return (
     <Animated.View entering={FadeInDown.delay(delay).springify()} style={[styles.statBadge, { borderColor: color + '33' }]}>
       <View style={[styles.statBadgeIcon, { backgroundColor: color + '22' }]}>
         <Ionicons name={icon} size={20} color={color} />
       </View>
       <Text style={[styles.statBadgeValue, { color }]}>{value}</Text>
-      <Text style={styles.statBadgeLabel}>{label}</Text>
+      <Text style={[styles.statBadgeLabel, { color: colors.textSecondary }]}>{label}</Text>
     </Animated.View>
   );
 }
 
 export default function StatsScreen() {
+  const { colors } = useTheme();
   const [character, setCharacter] = useState(null);
   const [tasks, setTasks] = useState([]);
 
@@ -63,7 +67,7 @@ export default function StatsScreen() {
   };
 
   if (!character) {
-    return <View style={styles.center}><Text style={styles.loadingText}>Loading...</Text></View>;
+    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={[styles.loadingText, { color: colors.accent }]}>Loading...</Text></View>;
   }
 
   const completedTasks = tasks.filter(t => t.completed);
@@ -114,21 +118,21 @@ export default function StatsScreen() {
   }).length;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent}>
       <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.header}>
         <View style={styles.headerIconWrap}>
-          <Ionicons name="stats-chart" size={28} color="#FFD700" />
+          <Ionicons name="stats-chart" size={28} color={colors.accent} />
         </View>
-        <Text style={styles.headerTitle}>Statistics</Text>
-        <Text style={styles.headerSub}>{character.name || 'Hero'}'s Journey</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Statistics</Text>
+        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>{character.name || 'Hero'}'s Journey</Text>
       </Animated.View>
 
       <AnimatedCard title="Quick Stats" iconName="grid-outline" delay={120}>
         <View style={styles.badgeGrid}>
           <StatBadge icon="checkmark-done" value={completedCount} label="Completed" color="#4CAF50" delay={140} />
           <StatBadge icon="flame" value={character.currentStreak || 0} label="Current Streak" color="#FF5722" delay={160} />
-          <StatBadge icon="trophy" value={character.longestStreak || 0} label="Best Streak" color="#A78BFA" delay={180} />
-          <StatBadge icon="flash" value={totalXp} label="XP Earned" color="#FFD700" delay={200} />
+          <StatBadge icon="trophy" value={character.longestStreak || 0} label="Best Streak" color={colors.accentSecondary} delay={180} />
+          <StatBadge icon="flash" value={totalXp} label="XP Earned" color={colors.accent} delay={200} />
           <StatBadge icon="checkmark-circle" value={`${completionRate}%`} label="Completion Rate" color="#4ECDC4" delay={220} />
           <StatBadge icon="calendar" value={tasksThisMonth} label="This Month" color="#2196F3" delay={240} />
           <StatBadge icon="trending-up" value={tasksThisWeek} label="This Week" color="#FF9800" delay={260} />
@@ -141,15 +145,15 @@ export default function StatsScreen() {
           {Array.from({ length: dailyGoal }).map((_, i) => (
             <View key={i} style={[styles.progressDot, i < todayComplete && styles.progressDotDone]}>
               {i < todayComplete ? (
-                <Ionicons name="checkmark" size={18} color="#fff" />
+                <Ionicons name="checkmark" size={18} color={colors.textPrimary} />
               ) : (
-                <Text style={styles.progressDotText}>{i + 1}</Text>
+                <Text style={[styles.progressDotText, { color: colors.textSecondary }]}>{i + 1}</Text>
               )}
             </View>
           ))}
         </View>
         <View style={styles.progressMeta}>
-          <View style={styles.progressBar}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
             <View style={[styles.progressBarFill, { width: `${(todayComplete / dailyGoal) * 100}%` }]} />
           </View>
           <Text style={styles.progressText}>{todayComplete} / {dailyGoal} tasks</Text>
@@ -158,7 +162,7 @@ export default function StatsScreen() {
 
       <AnimatedCard title="XP Summary" iconName="flash-outline" delay={360}>
         <View style={styles.xpRow}>
-          <View style={[styles.xpItem, { borderColor: '#FFD70033' }]}>
+          <View style={[styles.xpItem, { borderColor: colors.accent + '33' }]}>
             <Text style={styles.xpValue}>{totalXp}</Text>
             <Text style={styles.xpLabel}>Total XP</Text>
           </View>
@@ -166,8 +170,8 @@ export default function StatsScreen() {
             <Text style={[styles.xpValue, { color: '#4CAF50' }]}>{Math.round(totalXp / (completedCount || 1))}</Text>
             <Text style={styles.xpLabel}>Avg per Task</Text>
           </View>
-          <View style={[styles.xpItem, { borderColor: '#A78BFA33' }]}>
-            <Text style={[styles.xpValue, { color: '#A78BFA' }]}>{character.level || 1}</Text>
+          <View style={[styles.xpItem, { borderColor: colors.accentSecondary + '33' }]}>
+            <Text style={[styles.xpValue, { color: colors.accentSecondary }]}>{character.level || 1}</Text>
             <Text style={styles.xpLabel}>Current Level</Text>
           </View>
         </View>
@@ -181,7 +185,7 @@ export default function StatsScreen() {
             const xpTotal = xpByCategory[cat] || 0;
             return (
               <View key={cat} style={styles.categoryRow}>
-                <View style={[styles.categoryDot, { backgroundColor: catData?.color || '#FFD700' }]} />
+                <View style={[styles.categoryDot, { backgroundColor: catData?.color || colors.accent }]} />
                 <View style={styles.categoryInfo}>
                   <Text style={styles.categoryName}>{catData?.label || cat}</Text>
                   <Text style={styles.categoryXp}>+{xpTotal} XP</Text>
@@ -189,10 +193,10 @@ export default function StatsScreen() {
                 <View style={styles.categoryBarBg}>
                   <View style={[styles.categoryBarFill, {
                     width: `${(count / maxCount) * 100}%`,
-                    backgroundColor: catData?.color || '#FFD700',
+                    backgroundColor: catData?.color || colors.accent,
                   }]} />
                 </View>
-                <Text style={[styles.categoryCount, { color: catData?.color || '#FFD700' }]}>{count}</Text>
+                <Text style={[styles.categoryCount, { color: catData?.color || colors.accent }]}>{count}</Text>
               </View>
             );
           })}
@@ -231,8 +235,8 @@ export default function StatsScreen() {
           {[
             { icon: 'checkmark-done', label: `${completedCount} Tasks`, sub: `of 100 goal`, progress: Math.min(completedCount / 100 * 100, 100), color: '#4CAF50' },
             { icon: 'flame', label: `${character.currentStreak || 0}d Streak`, sub: `of 30d goal`, progress: Math.min((character.currentStreak || 0) / 30 * 100, 100), color: '#FF5722' },
-            { icon: 'flash', label: `${totalXp} XP`, sub: `of 5000 goal`, progress: Math.min(totalXp / 5000 * 100, 100), color: '#FFD700' },
-            { icon: 'trending-up', label: `Level ${character.level || 1}`, sub: `of 12 goal`, progress: Math.min((character.level || 1) / 12 * 100, 100), color: '#A78BFA' },
+            { icon: 'flash', label: `${totalXp} XP`, sub: `of 5000 goal`, progress: Math.min(totalXp / 5000 * 100, 100), color: colors.accent },
+            { icon: 'trending-up', label: `Level ${character.level || 1}`, sub: `of 12 goal`, progress: Math.min((character.level || 1) / 12 * 100, 100), color: colors.accentSecondary },
           ].map((m, i) => (
             <View key={i} style={styles.milestoneRow}>
               <View style={[styles.milestoneIcon, { backgroundColor: m.color + '22' }]}>
