@@ -166,7 +166,7 @@ export default function DailyReward({ character, onClaim, style }) {
         </Animated.View>
       </TouchableOpacity>
 
-      <Modal visible={showModal} transparent animationType="fade">
+      <Modal visible={showModal} transparent animationType="fade" onRequestClose={closeModal}>
         <View style={styles.modalOverlay}>
           <Animated.View style={[styles.modal, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }, rewardAnimStyle]}>
             <ScrollView contentContainerStyle={styles.modalScroll} showsVerticalScrollIndicator={false}>

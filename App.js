@@ -53,7 +53,7 @@ function TabBarIcon({ iconName, iconOutline, activeColor, focused }) {
 function MainNavigator() {
   const { loaded, colors } = useTheme();
 
-  const   tabBarStyle = {
+  const tabBarStyle = {
     backgroundColor: loaded ? colors.tabBar : '#0D0D1A',
     borderTopColor: loaded ? colors.tabBorder : '#1A1A2E',
     borderTopWidth: 1,
