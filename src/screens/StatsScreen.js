@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { loadData, saveData, clearAll, KEYS, getTodayKey, getWeekKey } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
@@ -43,6 +43,7 @@ function StatBadge({ icon, value, label, color, delay }) {
 
 export default function StatsScreen() {
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const [character, setCharacter] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -64,6 +65,7 @@ export default function StatsScreen() {
     setCharacter({ ...DEFAULT_CHARACTER });
     setTasks([]);
     setShowResetModal(false);
+    navigation.navigate('Home');
   };
 
   if (!character) {
