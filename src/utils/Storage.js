@@ -29,7 +29,7 @@ async function loadData(key, defaultValue = null) {
 
 async function clearAll() {
   try {
-    await AsyncStorage.multiRemove(Object.values(KEYS));
+    await AsyncStorage.clear();
     return true;
   } catch (e) {
     console.error('Clear error:', e);
