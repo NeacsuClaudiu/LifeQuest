@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
-import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, UNLOCKABLE_ITEMS, EVOLUTION_STAGES } from '../data/CharacterData';
+import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, UNLOCKABLE_ITEMS, getElement, ELEMENTS } from '../data/CharacterData';
 import { loadData, saveData, KEYS } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import CharacterView from '../components/CharacterView';
@@ -85,8 +85,17 @@ export default function CharacterScreen() {
   }
 
   const levelInfo = getLevelInfo(character.level);
-  const stage = getEvolutionStage(character.evolutionStage || 0);
-  const stageColor = getEvolutionColor(character.evolutionStage || 0);
+  const currentElement = character.element || 'plant';
+  const elementData = getElement(currentElement);
+  const stage = getEvolutionStage(currentElement, character.evolutionStage || 0);
+  const stageColor = getEvolutionColor(currentElement);
+
+  const switchElement = async (elementId) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const updated = { ...character, element: elementId, evolutionStage: 0, consecutiveDays: 0 };
+    setCharacter(updated);
+    await saveData(KEYS.CHARACTER, updated);
+  };
 
   const allItems = UNLOCKABLE_ITEMS.filter(i => {
     if (activeTab === 'customize') return true;
@@ -121,10 +130,26 @@ export default function CharacterScreen() {
         </Animated.View>
       </LinearGradient>
 
+      <Animated.View entering={FadeInDown.delay(120).springify()} style={styles.elementSection}>
+        <Text style={styles.elementTitle}>Choose Element</Text>
+        <View style={styles.elementRow}>
+          {Object.values(ELEMENTS).map((el) => (
+            <TouchableOpacity
+              key={el.id}
+              style={[styles.elementBtn, currentElement === el.id && { backgroundColor: el.color + '33', borderColor: el.color }]}
+              onPress={() => switchElement(el.id)}
+            >
+              <Ionicons name={el.icon} size={20} color={currentElement === el.id ? el.color : '#666'} />
+              <Text style={[styles.elementBtnText, currentElement === el.id && { color: el.color }]}>{el.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Animated.View>
+
       <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.evoTrack}>
-        <Text style={styles.evoTrackTitle}>Evolution Journey</Text>
+        <Text style={styles.evoTrackTitle}>{elementData.name} Evolution</Text>
         <View style={styles.evoRow}>
-          {EVOLUTION_STAGES.map((s, i) => (
+          {elementData.stages.map((s, i) => (
             <View key={s.id} style={styles.evoNodeWrap}>
               <View style={[
                 styles.evoNode,
@@ -208,6 +233,17 @@ const styles = StyleSheet.create({
   levelBadgeText: { color: '#0D0D1A', fontWeight: '900', fontSize: 14 },
   stageText: { fontSize: 11, marginTop: 8, textTransform: 'uppercase', letterSpacing: 3 },
   stageDesc: { color: '#666', fontSize: 12, marginTop: 4 },
+  elementSection: {
+    backgroundColor: '#1A1A2E', marginHorizontal: 16, borderRadius: 20, padding: 16, marginTop: 12,
+    borderWidth: 1, borderColor: '#2A2A3E',
+  },
+  elementTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 10 },
+  elementRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  elementBtn: {
+    flex: 1, alignItems: 'center', padding: 10, borderRadius: 12,
+    backgroundColor: '#2A2A3E', marginHorizontal: 4, borderWidth: 1, borderColor: '#333',
+  },
+  elementBtnText: { color: '#666', fontSize: 10, fontWeight: '600', marginTop: 4 },
   evoTrack: {
     backgroundColor: '#1A1A2E', marginHorizontal: 16, borderRadius: 20, padding: 16, marginTop: 12,
     borderWidth: 1, borderColor: '#2A2A3E',

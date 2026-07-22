@@ -3,6 +3,7 @@ import { STREAK_BONUS } from './TaskDatabase';
 const DEFAULT_CHARACTER = {
   name: 'Hero',
   level: 1,
+  element: 'plant',
   evolutionStage: 0,
   currentXp: 0,
   totalXpEarned: 0,
@@ -29,49 +30,133 @@ const DEFAULT_CHARACTER = {
   achievements: [],
 };
 
-const EVOLUTION_STAGES = [
-  { id: 0, name: 'Seed', description: 'A tiny seed waiting to grow', wiltPenalty: 0, evolveAfter: 0 },
-  { id: 1, name: 'Sprout', description: 'A small green shoot emerges', wiltPenalty: 0, evolveAfter: 3 },
-  { id: 2, name: 'Sapling', description: 'Growing stronger with leaves', wiltPenalty: 0.1, evolveAfter: 3 },
-  { id: 3, name: 'Bud', description: 'A flower bud is forming', wiltPenalty: 0.15, evolveAfter: 3 },
-  { id: 4, name: 'Bloom', description: 'A beautiful flower in bloom', wiltPenalty: 0.2, evolveAfter: 4 },
-  { id: 5, name: 'Tree', description: 'A sturdy young tree', wiltPenalty: 0.25, evolveAfter: 4 },
-  { id: 6, name: 'Ancient Tree', description: 'A wise old tree with fruits', wiltPenalty: 0.3, evolveAfter: 5 },
-  { id: 7, name: 'Sacred Tree', description: 'A magical glowing tree', wiltPenalty: 0.4, evolveAfter: 0 },
-];
-
-const EVOLUTION_SPRITES = {
-  0: require('../../assets/characters/seedling.png'),
-  1: require('../../assets/characters/sprout.png'),
-  2: require('../../assets/characters/sapling.png'),
-  3: require('../../assets/characters/bud.png'),
-  4: require('../../assets/characters/bloom.png'),
-  5: require('../../assets/characters/tree.png'),
-  6: require('../../assets/characters/ancient.png'),
-  7: require('../../assets/characters/sacred.png'),
+const ELEMENTS = {
+  plant: {
+    id: 'plant',
+    name: 'Plant',
+    icon: 'leaf',
+    color: '#4CAF50',
+    stages: [
+      { id: 0, name: 'Seed', description: 'A tiny seed waiting to grow', wiltPenalty: 0, evolveAfter: 0 },
+      { id: 1, name: 'Sprout', description: 'A small green shoot emerges', wiltPenalty: 0, evolveAfter: 3 },
+      { id: 2, name: 'Sapling', description: 'Growing stronger with leaves', wiltPenalty: 0.1, evolveAfter: 3 },
+      { id: 3, name: 'Bud', description: 'A flower bud is forming', wiltPenalty: 0.15, evolveAfter: 3 },
+      { id: 4, name: 'Bloom', description: 'A beautiful flower in bloom', wiltPenalty: 0.2, evolveAfter: 4 },
+      { id: 5, name: 'Tree', description: 'A sturdy young tree', wiltPenalty: 0.25, evolveAfter: 4 },
+      { id: 6, name: 'Ancient Tree', description: 'A wise old tree with fruits', wiltPenalty: 0.3, evolveAfter: 5 },
+      { id: 7, name: 'Sacred Tree', description: 'A magical glowing tree', wiltPenalty: 0.4, evolveAfter: 0 },
+    ],
+  },
+  fire: {
+    id: 'fire',
+    name: 'Fire',
+    icon: 'flame',
+    color: '#FF5722',
+    stages: [
+      { id: 0, name: 'Ember', description: 'A tiny glowing coal', wiltPenalty: 0, evolveAfter: 0 },
+      { id: 1, name: 'Flame', description: 'A small flickering flame', wiltPenalty: 0, evolveAfter: 3 },
+      { id: 2, name: 'Fire', description: 'A steady burning fire', wiltPenalty: 0.1, evolveAfter: 3 },
+      { id: 3, name: 'Inferno', description: 'A raging wall of fire', wiltPenalty: 0.15, evolveAfter: 3 },
+      { id: 4, name: 'Phoenix', description: 'A reborn fire bird', wiltPenalty: 0.2, evolveAfter: 4 },
+      { id: 5, name: 'Dragon', description: 'A fierce fire dragon', wiltPenalty: 0.25, evolveAfter: 4 },
+      { id: 6, name: 'Dragon Lord', description: 'Ruler of all flames', wiltPenalty: 0.3, evolveAfter: 5 },
+      { id: 7, name: 'Eternal Phoenix', description: 'Immortal flame of power', wiltPenalty: 0.4, evolveAfter: 0 },
+    ],
+  },
+  water: {
+    id: 'water',
+    name: 'Water',
+    icon: 'water',
+    color: '#2196F3',
+    stages: [
+      { id: 0, name: 'Drop', description: 'A single water droplet', wiltPenalty: 0, evolveAfter: 0 },
+      { id: 1, name: 'Puddle', description: 'A small gathering of water', wiltPenalty: 0, evolveAfter: 3 },
+      { id: 2, name: 'Pond', description: 'A calm still pond', wiltPenalty: 0.1, evolveAfter: 3 },
+      { id: 3, name: 'Lake', description: 'A wide peaceful lake', wiltPenalty: 0.15, evolveAfter: 3 },
+      { id: 4, name: 'River', description: 'A flowing powerful river', wiltPenalty: 0.2, evolveAfter: 4 },
+      { id: 5, name: 'Ocean', description: 'The vast deep ocean', wiltPenalty: 0.25, evolveAfter: 4 },
+      { id: 6, name: 'Tsunami', description: 'An unstoppable wave', wiltPenalty: 0.3, evolveAfter: 5 },
+      { id: 7, name: 'Leviathan', description: 'Ancient sea creature of legend', wiltPenalty: 0.4, evolveAfter: 0 },
+    ],
+  },
+  crystal: {
+    id: 'crystal',
+    name: 'Crystal',
+    icon: 'diamond',
+    color: '#9C27B0',
+    stages: [
+      { id: 0, name: 'Pebble', description: 'A rough uncut stone', wiltPenalty: 0, evolveAfter: 0 },
+      { id: 1, name: 'Stone', description: 'A smoothed river stone', wiltPenalty: 0, evolveAfter: 3 },
+      { id: 2, name: 'Rock', description: 'A solid sturdy rock', wiltPenalty: 0.1, evolveAfter: 3 },
+      { id: 3, name: 'Boulder', description: 'A massive ancient boulder', wiltPenalty: 0.15, evolveAfter: 3 },
+      { id: 4, name: 'Crystal', description: 'A glowing pure crystal', wiltPenalty: 0.2, evolveAfter: 4 },
+      { id: 5, name: 'Gem', description: 'A precious radiant gem', wiltPenalty: 0.25, evolveAfter: 4 },
+      { id: 6, name: 'Diamond', description: 'An indestructible diamond', wiltPenalty: 0.3, evolveAfter: 5 },
+      { id: 7, name: 'Prism', description: 'A cosmic light-bending prism', wiltPenalty: 0.4, evolveAfter: 0 },
+    ],
+  },
 };
 
-const EVOLUTION_COLORS = [
-  '#8B7355',
-  '#7CB342',
-  '#66BB6A',
-  '#F48FB1',
-  '#E91E63',
-  '#4CAF50',
-  '#FF9800',
-  '#FFD700',
-];
+const ELEMENT_SPRITES = {
+  plant: {
+    0: require('../../assets/characters/plant_0.png'),
+    1: require('../../assets/characters/plant_1.png'),
+    2: require('../../assets/characters/plant_2.png'),
+    3: require('../../assets/characters/plant_3.png'),
+    4: require('../../assets/characters/plant_4.png'),
+    5: require('../../assets/characters/plant_5.png'),
+    6: require('../../assets/characters/plant_6.png'),
+    7: require('../../assets/characters/plant_7.png'),
+  },
+  fire: {
+    0: require('../../assets/characters/fire_0.png'),
+    1: require('../../assets/characters/fire_1.png'),
+    2: require('../../assets/characters/fire_2.png'),
+    3: require('../../assets/characters/fire_3.png'),
+    4: require('../../assets/characters/fire_4.png'),
+    5: require('../../assets/characters/fire_5.png'),
+    6: require('../../assets/characters/fire_6.png'),
+    7: require('../../assets/characters/fire_7.png'),
+  },
+  water: {
+    0: require('../../assets/characters/water_0.png'),
+    1: require('../../assets/characters/water_1.png'),
+    2: require('../../assets/characters/water_2.png'),
+    3: require('../../assets/characters/water_3.png'),
+    4: require('../../assets/characters/water_4.png'),
+    5: require('../../assets/characters/water_5.png'),
+    6: require('../../assets/characters/water_6.png'),
+    7: require('../../assets/characters/water_7.png'),
+  },
+  crystal: {
+    0: require('../../assets/characters/crystal_0.png'),
+    1: require('../../assets/characters/crystal_1.png'),
+    2: require('../../assets/characters/crystal_2.png'),
+    3: require('../../assets/characters/crystal_3.png'),
+    4: require('../../assets/characters/crystal_4.png'),
+    5: require('../../assets/characters/crystal_5.png'),
+    6: require('../../assets/characters/crystal_6.png'),
+    7: require('../../assets/characters/crystal_7.png'),
+  },
+};
 
-function getEvolutionStage(stage) {
-  return EVOLUTION_STAGES[Math.min(stage, EVOLUTION_STAGES.length - 1)];
+function getElement(elementId) {
+  return ELEMENTS[elementId] || ELEMENTS.plant;
 }
 
-function getEvolutionSprite(stage) {
-  return EVOLUTION_SPRITES[Math.min(stage, EVOLUTION_STAGES.length - 1)] || EVOLUTION_SPRITES[0];
+function getEvolutionStage(elementId, stage) {
+  const element = getElement(elementId);
+  return element.stages[Math.min(stage, element.stages.length - 1)];
 }
 
-function getEvolutionColor(stage) {
-  return EVOLUTION_COLORS[Math.min(stage, EVOLUTION_COLORS.length - 1)];
+function getEvolutionSprite(elementId, stage) {
+  const sprites = ELEMENT_SPRITES[elementId] || ELEMENT_SPRITES.plant;
+  return sprites[Math.min(stage, 7)] || sprites[0];
+}
+
+function getEvolutionColor(elementId) {
+  const element = getElement(elementId);
+  return element.color;
 }
 
 function processDayCheck(character) {
@@ -123,9 +208,10 @@ function devolveCharacter(character, amount) {
 
 function evolveCharacter(character) {
   const c = { ...character };
-  const maxStage = EVOLUTION_STAGES.length - 1;
+  const element = getElement(c.element);
+  const maxStage = element.stages.length - 1;
   if (c.evolutionStage < maxStage) {
-    const stageInfo = EVOLUTION_STAGES[c.evolutionStage];
+    const stageInfo = element.stages[c.evolutionStage];
     if (c.consecutiveDays >= stageInfo.evolveAfter && stageInfo.evolveAfter > 0) {
       c.evolutionStage = c.evolutionStage + 1;
       c.consecutiveDays = 0;
@@ -214,9 +300,9 @@ const UNLOCKABLE_ITEMS = [
 
 export {
   DEFAULT_CHARACTER,
-  EVOLUTION_STAGES,
-  EVOLUTION_SPRITES,
-  EVOLUTION_COLORS,
+  ELEMENTS,
+  ELEMENT_SPRITES,
+  getElement,
   getEvolutionStage,
   getEvolutionSprite,
   getEvolutionColor,

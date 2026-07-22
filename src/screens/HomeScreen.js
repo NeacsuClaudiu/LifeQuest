@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { DIFFICULTIES } from '../data/TaskDatabase';
-import { getLevelInfo, getEvolutionStage, getEvolutionColor, getEvolutionSprite, processDayCheck, getXpPenalty } from '../data/CharacterData';
+import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, getXpPenalty, getElement, ELEMENTS } from '../data/CharacterData';
 import { loadData, saveData, KEYS } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import CharacterView from '../components/CharacterView';
@@ -57,8 +57,9 @@ export default function HomeScreen({ navigation }) {
   }
 
   const levelInfo = getLevelInfo(character.level);
-  const stage = getEvolutionStage(character.evolutionStage || 0);
-  const stageColor = getEvolutionColor(character.evolutionStage || 0);
+  const element = character.element || 'plant';
+  const stage = getEvolutionStage(element, character.evolutionStage || 0);
+  const stageColor = getEvolutionColor(element);
   const totalTasks = character.tasksCompleted || 0;
   const streak = character.currentStreak || 0;
   const penalty = getXpPenalty(character);

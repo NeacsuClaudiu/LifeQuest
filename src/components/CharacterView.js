@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Image, StyleSheet, Text } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing } from 'react-native-reanimated';
-import { getEvolutionStage, getEvolutionSprite, getEvolutionColor, getXpPenalty } from '../data/CharacterData';
+import { getEvolutionStage, getEvolutionSprite, getEvolutionColor, getXpPenalty, getElement } from '../data/CharacterData';
 
 export default function CharacterView({ character, size = 'large', animated = true }) {
-  const stage = getEvolutionStage(character.evolutionStage || 0);
+  const element = character.element || 'plant';
+  const stage = getEvolutionStage(element, character.evolutionStage || 0);
   const sizeMap = { small: 80, medium: 120, large: 160 };
   const imgSize = sizeMap[size] || 160;
-  const color = getEvolutionColor(character.evolutionStage || 0);
+  const color = getEvolutionColor(element);
 
   const floatAnim = useSharedValue(0);
   const wiltAnim = useSharedValue(1);
@@ -38,7 +39,7 @@ export default function CharacterView({ character, size = 'large', animated = tr
     transform: [{ scale: 0.85 + (wiltAnim.value * 0.15) }],
   }));
 
-  const sprite = getEvolutionSprite(character.evolutionStage || 0);
+  const sprite = getEvolutionSprite(element, character.evolutionStage || 0);
   const penalty = getXpPenalty(character);
 
   return (
@@ -49,7 +50,7 @@ export default function CharacterView({ character, size = 'large', animated = tr
       <View style={[styles.glowOuter, { width: imgSize + 40, height: imgSize + 40, borderColor: color + '22' }]} />
       <View style={[styles.glowInner, { width: imgSize + 10, height: imgSize + 10, borderColor: color + '33' }]} />
       <Animated.View style={wiltStyle}>
-        <View style={[styles.circleClip, { width: imgSize, height: imgSize, borderColor: color + '44' }]}>
+        <View style={[styles.circleClip, { width: imgSize, height: imgSize, borderColor: color + '44', backgroundColor: color + '11' }]}>
           <Image source={sprite} style={{ width: imgSize, height: imgSize }} resizeMode="cover" />
         </View>
       </Animated.View>
@@ -66,7 +67,6 @@ const styles = StyleSheet.create({
   circleClip: {
     borderRadius: 999,
     overflow: 'hidden',
-    backgroundColor: '#0D0D1A',
     borderWidth: 2,
   },
   glowOuter: {
