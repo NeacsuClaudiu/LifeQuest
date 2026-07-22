@@ -7,8 +7,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DIFFICULTIES, CATEGORIES, PRESET_TASKS } from '../data/TaskDatabase';
-import { getLevelInfo, calculateReward, processDayCheck, evolveCharacter, getXpPenalty, getEvolutionStage, getEvolutionColor } from '../data/CharacterData';
-import { loadData, saveData, KEYS } from '../utils/Storage';
+import { getLevelInfo, calculateReward, processDayCheck, evolveCharacter, getXpPenalty, getEvolutionStage, getEvolutionColor, checkAchievements, getUnlockedAchievements } from '../data/CharacterData';
+import { loadData, saveData, KEYS, recordTaskCompleted, logAchievement } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import TaskCard from '../components/TaskCard';
 import ConfettiOverlay from '../components/ConfettiOverlay';
@@ -114,6 +114,19 @@ export default function TasksScreen() {
     await saveData(KEYS.CHARACTER, updatedCharacter);
     setCharacter(updatedCharacter);
     setTasks(updatedTasks);
+
+    await recordTaskCompleted(rewardXp);
+
+    const newlyUnlocked = checkAchievements(updatedCharacter);
+    for (const a of newlyUnlocked) {
+      if (!updatedCharacter.achievements?.includes(a.id)) {
+        await logAchievement(a);
+        updatedCharacter.achievements = [...(updatedCharacter.achievements || []), a.id];
+      }
+    }
+    if (newlyUnlocked.length > 0) {
+      await saveData(KEYS.CHARACTER, updatedCharacter);
+    }
 
     setRewardPopup({ xp: rewardXp, task: task.title });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

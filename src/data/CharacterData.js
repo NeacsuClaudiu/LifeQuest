@@ -298,10 +298,47 @@ const UNLOCKABLE_ITEMS = [
   { id: 'aura_divine', name: 'Divine Light', type: 'aura', minLevel: 12, cost: 700, icon: 'star' },
 ];
 
+const ACHIEVEMENTS = [
+  { id: 'first_task', name: 'First Steps', description: 'Complete your first task', icon: 'rocket', condition: (c) => (c.tasksCompleted || 0) >= 1 },
+  { id: 'ten_tasks', name: 'Getting Started', description: 'Complete 10 tasks', icon: 'checkmark-circle', condition: (c) => (c.tasksCompleted || 0) >= 10 },
+  { id: 'twentyfive_tasks', name: 'Quarter Century', description: 'Complete 25 tasks', icon: 'ribbon', condition: (c) => (c.tasksCompleted || 0) >= 25 },
+  { id: 'fifty_tasks', name: 'Half Century', description: 'Complete 50 tasks', icon: 'trophy', condition: (c) => (c.tasksCompleted || 0) >= 50 },
+  { id: 'hundred_tasks', name: 'Century', description: 'Complete 100 tasks', icon: 'star', condition: (c) => (c.tasksCompleted || 0) >= 100 },
+  { id: 'streak_3', name: 'On Fire', description: '3-day streak', icon: 'flame', condition: (c) => (c.longestStreak || 0) >= 3 },
+  { id: 'streak_7', name: 'Week Warrior', description: '7-day streak', icon: 'flash', condition: (c) => (c.longestStreak || 0) >= 7 },
+  { id: 'streak_14', name: 'Fortnight Fighter', description: '14-day streak', icon: 'thunderstorm', condition: (c) => (c.longestStreak || 0) >= 14 },
+  { id: 'streak_30', name: 'Monthly Master', description: '30-day streak', icon: 'medal', condition: (c) => (c.longestStreak || 0) >= 30 },
+  { id: 'level_3', name: 'Rising Star', description: 'Reach level 3', icon: 'arrow-up', condition: (c) => (c.level || 1) >= 3 },
+  { id: 'level_5', name: 'Determined', description: 'Reach level 5', icon: 'trending-up', condition: (c) => (c.level || 1) >= 5 },
+  { id: 'level_8', name: 'Champion', description: 'Reach level 8', icon: 'ribbon-outline', condition: (c) => (c.level || 1) >= 8 },
+  { id: 'level_10', name: 'Legend', description: 'Reach level 10', icon: 'crown', condition: (c) => (c.level || 1) >= 10 },
+  { id: 'level_12', name: 'Ascended', description: 'Reach level 12', icon: 'diamond', condition: (c) => (c.level || 1) >= 12 },
+  { id: 'evo_3', name: 'Blossoming', description: 'Reach evolution stage 3', icon: 'flower', condition: (c) => (c.evolutionStage || 0) >= 3 },
+  { id: 'evo_7', name: 'Transcended', description: 'Reach max evolution', icon: 'git-merge', condition: (c) => (c.evolutionStage || 0) >= 7 },
+  { id: 'xp_500', name: 'XP Hunter', description: 'Earn 500 total XP', icon: 'flash-outline', condition: (c) => (c.totalXpEarned || 0) >= 500 },
+  { id: 'xp_2000', name: 'XP Master', description: 'Earn 2000 total XP', icon: 'bolt', condition: (c) => (c.totalXpEarned || 0) >= 2000 },
+  { id: 'xp_5000', name: 'XP Legend', description: 'Earn 5000 total XP', icon: 'nuclear', condition: (c) => (c.totalXpEarned || 0) >= 5000 },
+];
+
+function checkAchievements(character) {
+  const newAchievements = [];
+  for (const achievement of ACHIEVEMENTS) {
+    if (!character.achievements?.includes(achievement.id) && achievement.condition(character)) {
+      newAchievements.push(achievement);
+    }
+  }
+  return newAchievements;
+}
+
+function getUnlockedAchievements(character) {
+  return ACHIEVEMENTS.filter(a => character.achievements?.includes(a.id));
+}
+
 export {
   DEFAULT_CHARACTER,
   ELEMENTS,
   ELEMENT_SPRITES,
+  ACHIEVEMENTS,
   getElement,
   getEvolutionStage,
   getEvolutionSprite,
@@ -316,4 +353,6 @@ export {
   getLevelInfo,
   LEVEL_THRESHOLDS,
   UNLOCKABLE_ITEMS,
+  checkAchievements,
+  getUnlockedAchievements,
 };

@@ -5,9 +5,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { DIFFICULTIES } from '../data/TaskDatabase';
-import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, getXpPenalty, getElement, ELEMENTS } from '../data/CharacterData';
-import { loadData, saveData, KEYS } from '../utils/Storage';
+import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, getXpPenalty, getElement, ELEMENTS, checkAchievements, getUnlockedAchievements, ACHIEVEMENTS } from '../data/CharacterData';
+import { loadData, saveData, KEYS, getTodayStats, getWeeklyStats, recordTaskCompleted, logAchievement } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
+import { getQuoteOfDay } from '../data/Quotes';
 import CharacterView from '../components/CharacterView';
 import XPBar from '../components/XPBar';
 import TaskCard from '../components/TaskCard';
@@ -22,10 +23,52 @@ function StatCard({ label, value, iconName, color, delay }) {
   );
 }
 
+function MiniCard({ icon, iconColor, title, subtitle, progress, progressColor, delay }) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.miniCard}>
+      <View style={styles.miniHeader}>
+        <View style={styles.miniIconWrap}>
+          <Ionicons name={icon} size={16} color={iconColor} />
+        </View>
+        <Text style={styles.miniTitle}>{title}</Text>
+      </View>
+      {progress !== undefined && (
+        <View style={styles.miniBarOuter}>
+          <View style={[styles.miniBarFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: progressColor }]} />
+        </View>
+      )}
+      {subtitle && <Text style={styles.miniSub}>{subtitle}</Text>}
+    </Animated.View>
+  );
+}
+
+function AchievementRow({ icon, iconColor, title, subtitle, delay, isNew }) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.achievementRow}>
+      <View style={[styles.achievementIcon, { backgroundColor: iconColor + '22' }]}>
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
+      <View style={styles.achievementInfo}>
+        <Text style={styles.achievementTitle}>{title}</Text>
+        <Text style={styles.achievementSub}>{subtitle}</Text>
+      </View>
+      {isNew && <View style={styles.newBadge}><Text style={styles.newBadgeText}>NEW</Text></View>}
+    </Animated.View>
+  );
+}
+
+const DAILY_GOAL = 5;
+
 export default function HomeScreen({ navigation }) {
   const [character, setCharacter] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [allTasks, setAllTasks] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [todayStats, setTodayStats] = useState({ completed: 0, xpEarned: 0, tasks: [] });
+  const [weeklyStats, setWeeklyStats] = useState({ completed: 0, xpEarned: 0 });
+  const [recentAchievements, setRecentAchievements] = useState([]);
+  const [newAchievements, setNewAchievements] = useState([]);
+  const quote = getQuoteOfDay();
 
   const loadDataAsync = useCallback(async () => {
     let char = await loadData(KEYS.CHARACTER);
@@ -34,10 +77,36 @@ export default function HomeScreen({ navigation }) {
       await saveData(KEYS.CHARACTER, char);
     }
     char = processDayCheck(char);
+
+    const newlyUnlocked = checkAchievements(char);
+    if (newlyUnlocked.length > 0) {
+      const updatedAchievements = [...(char.achievements || [])];
+      for (const a of newlyUnlocked) {
+        if (!updatedAchievements.includes(a.id)) {
+          updatedAchievements.push(a.id);
+          await logAchievement(a);
+        }
+      }
+      char.achievements = updatedAchievements;
+    }
+
     await saveData(KEYS.CHARACTER, char);
     const t = await loadData(KEYS.TASKS, []);
+    const today = await getTodayStats();
+    const week = await getWeeklyStats();
+    const recent = await loadData('@lifequest_achievements_log', []);
+
     setCharacter(char);
+    setAllTasks(t);
     setTasks(t.filter(task => !task.completed).slice(0, 5));
+    setTodayStats(today);
+    setWeeklyStats(week);
+    setNewAchievements(newlyUnlocked);
+    setRecentAchievements(recent.slice(-5).reverse());
+
+    if (newlyUnlocked.length > 0) {
+      setTimeout(() => setNewAchievements([]), 5000);
+    }
   }, []);
 
   useFocusEffect(useCallback(() => { loadDataAsync(); }, [loadDataAsync]));
@@ -66,6 +135,20 @@ export default function HomeScreen({ navigation }) {
   const daysSinceActive = character.daysSkipped || 0;
   const maxStages = 8;
   const progressPercent = ((character.evolutionStage || 0) / maxStages) * 100;
+
+  const dailyProgress = Math.min((todayStats.completed / DAILY_GOAL) * 100, 100);
+  const weeklyPercent = weeklyStats.completed > 0 ? Math.min((weeklyStats.completed / (DAILY_GOAL * 7)) * 100, 100) : 0;
+
+  const xpForNext = levelInfo.nextXpRequired - (character.totalXpEarned || 0);
+  const xpPercent = Math.min(((character.totalXpEarned - levelInfo.currentXpRequired) / (levelInfo.nextXpRequired - levelInfo.currentXpRequired)) * 100, 100);
+
+  const topPriorityTask = tasks.length > 0
+    ? tasks.reduce((best, t) => {
+        const bestDiff = DIFFICULTIES[best.difficulty]?.xp || 0;
+        const curDiff = DIFFICULTIES[t.difficulty]?.xp || 0;
+        return curDiff > bestDiff ? t : best;
+      }, tasks[0])
+    : null;
 
   const statsCards = [
     { label: 'Level', value: character.level, iconName: 'star', color: '#FFD700' },
@@ -128,9 +211,106 @@ export default function HomeScreen({ navigation }) {
               )}
             </Animated.View>
 
+            <Animated.View entering={FadeInDown.delay(260).springify()} style={styles.quoteCard}>
+              <View style={styles.quoteIconWrap}>
+                <Ionicons name="chatbubble-ellipses" size={14} color="#A78BFA" />
+              </View>
+              <Text style={styles.quoteText}>"{quote.text}"</Text>
+              <Text style={styles.quoteAuthor}>- {quote.author}</Text>
+            </Animated.View>
+
+            <View style={styles.progressRow}>
+              <MiniCard
+                icon="checkmark-circle"
+                iconColor="#4CAF50"
+                title="Daily Progress"
+                subtitle={`${todayStats.completed} / ${DAILY_GOAL} tasks`}
+                progress={dailyProgress}
+                progressColor="#4CAF50"
+                delay={300}
+              />
+              <MiniCard
+                icon="calendar"
+                iconColor="#2196F3"
+                title="Weekly"
+                subtitle={`${weeklyStats.completed} completed`}
+                progress={weeklyPercent}
+                progressColor="#2196F3"
+                delay={330}
+              />
+            </View>
+
+            <View style={styles.progressRow}>
+              <MiniCard
+                icon="trending-up"
+                iconColor="#FFD700"
+                title="XP to Next Level"
+                subtitle={`${xpForNext > 0 ? xpForNext : 0} XP to Level ${levelInfo.level + 1}`}
+                progress={xpPercent}
+                progressColor="#FFD700"
+                delay={360}
+              />
+              <MiniCard
+                icon="flame"
+                iconColor="#FF5722"
+                title="Current Streak"
+                subtitle={streak > 0 ? `${streak} day${streak > 1 ? 's' : ''} streak` : 'Start a streak!'}
+                progress={Math.min((streak / 7) * 100, 100)}
+                progressColor="#FF5722"
+                delay={390}
+              />
+            </View>
+
+            {topPriorityTask && (() => {
+              const diff = DIFFICULTIES[topPriorityTask.difficulty];
+              return (
+                <Animated.View entering={FadeInDown.delay(420).springify()} style={[styles.priorityCard, { borderLeftColor: diff?.color || '#FFD700' }]}>
+                  <View style={styles.priorityHeader}>
+                    <Ionicons name="flag" size={16} color={diff?.color || '#FFD700'} />
+                    <Text style={styles.priorityLabel}>Top Priority</Text>
+                  </View>
+                  <Text style={styles.priorityTitle}>{topPriorityTask.title}</Text>
+                  <View style={styles.priorityMeta}>
+                    <View style={[styles.priorityDiff, { backgroundColor: (diff?.color || '#FFD700') + '22' }]}>
+                      <Text style={[styles.priorityDiffText, { color: diff?.color || '#FFD700' }]}>{diff?.label || 'Task'}</Text>
+                    </View>
+                    <Text style={styles.priorityXp}>+{diff?.xp || 0} XP</Text>
+                  </View>
+                </Animated.View>
+              );
+            })()}
+
+            {recentAchievements.length > 0 && (
+              <Animated.View entering={FadeInDown.delay(450).springify()} style={styles.achievementsSection}>
+                <View style={styles.sectionHeaderRow}>
+                  <View style={styles.achievementsHeaderLeft}>
+                    <Ionicons name="trophy" size={16} color="#FFD700" />
+                    <Text style={styles.achievementsSectionTitle}>Recent Achievements</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => navigation.navigate('Stats')}>
+                    <Text style={styles.achSeeAll}>See All</Text>
+                  </TouchableOpacity>
+                </View>
+                {recentAchievements.slice(0, 3).map((a, i) => {
+                  const def = ACHIEVEMENTS.find(d => d.id === a.id);
+                  return (
+                    <AchievementRow
+                      key={a.id}
+                      icon={def?.icon || 'star'}
+                      iconColor="#FFD700"
+                      title={def?.name || a.id}
+                      subtitle={def?.description || ''}
+                      delay={460 + i * 40}
+                      isNew={newAchievements.some(n => n.id === a.id)}
+                    />
+                  );
+                })}
+              </Animated.View>
+            )}
+
             <View style={styles.statsRow}>
               {statsCards.map((stat, i) => (
-                <StatCard key={i} {...stat} delay={300 + i * 80} />
+                <StatCard key={i} {...stat} delay={500 + i * 80} />
               ))}
             </View>
 
@@ -194,6 +374,53 @@ const styles = StyleSheet.create({
   evoSub: { color: '#666', fontSize: 11, marginTop: 6 },
   warnRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, padding: 8, borderRadius: 8 },
   warnText: { fontSize: 11, fontWeight: '600', marginLeft: 6 },
+  quoteCard: {
+    marginHorizontal: 16, marginTop: 8, backgroundColor: '#1A1A2E', borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: '#2A2A3E',
+  },
+  quoteIconWrap: { marginBottom: 6 },
+  quoteText: { color: '#A78BFA', fontSize: 13, fontStyle: 'italic', lineHeight: 18 },
+  quoteAuthor: { color: '#666', fontSize: 11, marginTop: 4, textAlign: 'right' },
+  progressRow: { flexDirection: 'row', paddingHorizontal: 12, marginTop: 8 },
+  miniCard: {
+    flex: 1, backgroundColor: '#1A1A2E', borderRadius: 16, padding: 12,
+    marginHorizontal: 3, borderWidth: 1, borderColor: '#2A2A3E',
+  },
+  miniHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  miniIconWrap: {
+    width: 28, height: 28, borderRadius: 14, backgroundColor: '#2A2A3E',
+    alignItems: 'center', justifyContent: 'center', marginRight: 8,
+  },
+  miniTitle: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  miniBarOuter: { height: 6, backgroundColor: '#2A2A3E', borderRadius: 3, overflow: 'hidden', marginBottom: 6 },
+  miniBarFill: { height: '100%', borderRadius: 3 },
+  miniSub: { color: '#666', fontSize: 10, marginTop: 2 },
+  priorityCard: {
+    marginHorizontal: 16, marginTop: 8, backgroundColor: '#1A1A2E', borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: '#2A2A3E', borderLeftWidth: 4,
+  },
+  priorityHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  priorityLabel: { color: '#888', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginLeft: 6 },
+  priorityTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  priorityMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  priorityDiff: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, marginRight: 8 },
+  priorityDiffText: { fontSize: 10, fontWeight: '700' },
+  priorityXp: { color: '#FFD700', fontSize: 11, fontWeight: '600' },
+  achievementsSection: {
+    marginHorizontal: 16, marginTop: 8, backgroundColor: '#1A1A2E', borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: '#2A2A3E',
+  },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  achievementsHeaderLeft: { flexDirection: 'row', alignItems: 'center' },
+  achievementsSectionTitle: { color: '#FFD700', fontSize: 13, fontWeight: '700', marginLeft: 6 },
+  achSeeAll: { color: '#FFD700', fontSize: 11, fontWeight: '600' },
+  achievementRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#2A2A3E' },
+  achievementIcon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  achievementInfo: { flex: 1 },
+  achievementTitle: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  achievementSub: { color: '#666', fontSize: 11, marginTop: 1 },
+  newBadge: { backgroundColor: '#FFD70022', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+  newBadgeText: { color: '#FFD700', fontSize: 9, fontWeight: '700' },
   statsRow: { flexDirection: 'row', paddingHorizontal: 12, marginVertical: 12 },
   statCard: {
     flex: 1, backgroundColor: '#1A1A2E', borderRadius: 14, padding: 10, marginHorizontal: 3,
