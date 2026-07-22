@@ -12,6 +12,7 @@ import TasksScreen from './src/screens/TasksScreen';
 import CharacterScreen from './src/screens/CharacterScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import AchievementsScreen from './src/screens/AchievementsScreen';
+import MilestonesScreen from './src/screens/MilestonesScreen';
 import DailyReviewScreen from './src/screens/DailyReviewScreen';
 import WeeklyReviewScreen from './src/screens/WeeklyReviewScreen';
 
@@ -24,6 +25,7 @@ const TAB_ICONS = [
   { name: 'Weekly', icon: 'calendar', iconOutline: 'calendar-outline', activeColor: '#64B5F6' },
   { name: 'Character', icon: 'person', iconOutline: 'person-outline', activeColor: '#A78BFA' },
   { name: 'Achievements', icon: 'trophy', iconOutline: 'trophy-outline', activeColor: '#FFD700' },
+  { name: 'Milestones', icon: 'flag', iconOutline: 'flag-outline', activeColor: '#FF9800' },
   { name: 'Stats', icon: 'stats-chart', iconOutline: 'stats-chart-outline', activeColor: '#FF6B6B' },
 ];
 
@@ -83,6 +85,7 @@ function MainNavigator() {
             name === 'Weekly' ? WeeklyReviewScreen :
             name === 'Character' ? CharacterScreen :
             name === 'Achievements' ? AchievementsScreen :
+            name === 'Milestones' ? MilestonesScreen :
             StatsScreen
           }
           options={{
@@ -109,7 +112,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 60 },
+  tabIcon: { alignItems: 'center', justifyContent: 'center', minWidth: 44 },
   tabLabel: { fontSize: 10, marginTop: 4, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   activeDot: { width: 4, height: 4, borderRadius: 2, marginTop: 4 },
 });
