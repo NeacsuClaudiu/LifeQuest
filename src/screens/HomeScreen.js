@@ -12,6 +12,7 @@ import { getQuoteOfDay } from '../data/Quotes';
 import CharacterView from '../components/CharacterView';
 import XPBar from '../components/XPBar';
 import TaskCard from '../components/TaskCard';
+import DailyReward from '../components/DailyReward';
 
 function StatCard({ label, value, iconName, color, delay }) {
   return (
@@ -109,6 +110,18 @@ export default function HomeScreen({ navigation }) {
     }
   }, []);
 
+  const handleClaimReward = useCallback(async (rewards) => {
+    const updated = { ...character };
+    updated.totalXpEarned = (updated.totalXpEarned || 0) + rewards.xp;
+    updated.gold = (updated.gold || 0) + rewards.gold;
+    updated.lastDailyReward = new Date().toISOString();
+    updated.dailyRewardStreak = (updated.dailyRewardStreak || 0) + 1;
+    const levelInfo = getLevelInfo(updated.totalXpEarned);
+    if (levelInfo.level > updated.level) updated.level = levelInfo.level;
+    await saveData(KEYS.CHARACTER, updated);
+    setCharacter(updated);
+  }, [character]);
+
   useFocusEffect(useCallback(() => { loadDataAsync(); }, [loadDataAsync]));
 
   const onRefresh = async () => {
@@ -176,6 +189,10 @@ export default function HomeScreen({ navigation }) {
                   <View style={styles.titlePill}>
                     <Text style={styles.titlePillText}>{levelInfo.title}</Text>
                   </View>
+                  <View style={styles.goldBadge}>
+                    <Ionicons name="cash" size={12} color="#FF9800" />
+                    <Text style={styles.goldText}>{character.gold || 0}</Text>
+                  </View>
                 </View>
               </Animated.View>
             </LinearGradient>
@@ -210,6 +227,8 @@ export default function HomeScreen({ navigation }) {
                 </View>
               )}
             </Animated.View>
+
+            <DailyReward character={character} onClaim={handleClaimReward} />
 
             <Animated.View entering={FadeInDown.delay(260).springify()} style={styles.quoteCard}>
               <View style={styles.quoteIconWrap}>
@@ -363,6 +382,11 @@ const styles = StyleSheet.create({
   heroTitle: { color: '#fff', fontSize: 28, fontWeight: '900', marginTop: 4 },
   titlePill: { backgroundColor: '#FFD70022', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 3, marginTop: 6 },
   titlePillText: { color: '#FFD700', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  goldBadge: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF980022',
+    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6,
+  },
+  goldText: { color: '#FF9800', fontSize: 12, fontWeight: '800', marginLeft: 4 },
   evoCard: {
     marginHorizontal: 16, backgroundColor: '#1A1A2E', borderRadius: 16, padding: 14,
     borderWidth: 1, borderColor: '#2A2A3E',

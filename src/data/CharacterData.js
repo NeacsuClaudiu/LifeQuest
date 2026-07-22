@@ -13,6 +13,9 @@ const DEFAULT_CHARACTER = {
   consecutiveDays: 0,
   lastActiveDate: null,
   daysSkipped: 0,
+  gold: 0,
+  lastDailyReward: null,
+  dailyRewardStreak: 0,
   customization: {
     hat: null,
     accessory: null,
