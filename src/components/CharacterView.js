@@ -38,17 +38,21 @@ export default function CharacterView({ character, size = 'large', animated = tr
 
   return (
     <Animated.View style={[styles.container, floatStyle]}>
-      <View style={[styles.glowRing, { width: imgSize + 30, height: imgSize + 30, borderColor: stage.color + '44' }]} />
-      <Image source={sprite} style={[styles.sprite, { width: imgSize, height: imgSize }]} resizeMode="contain" />
+      <View style={[styles.glowOuter, { width: imgSize + 40, height: imgSize + 40, borderColor: stage.color + '22' }]} />
+      <View style={[styles.glowInner, { width: imgSize + 10, height: imgSize + 10, borderColor: stage.color + '33' }]} />
+      <Image source={sprite} style={{ width: imgSize, height: imgSize }} resizeMode="contain" />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center', justifyContent: 'center' },
-  glowRing: {
-    position: 'absolute', borderRadius: 999, borderWidth: 2,
-    opacity: 0.5,
+  glowOuter: {
+    position: 'absolute', borderRadius: 999, borderWidth: 1,
+    opacity: 0.6,
   },
-  sprite: { borderRadius: 16 },
+  glowInner: {
+    position: 'absolute', borderRadius: 999, borderWidth: 1,
+    opacity: 0.4,
+  },
 });
