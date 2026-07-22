@@ -55,7 +55,7 @@ async function recordTaskCompleted(xpEarned) {
 
   const dailyLog = await loadData('@lifequest_daily_log', {});
   if (!dailyLog[today]) {
-    dailyLog[today] = { completed: 0, xpEarned: 0, tasks: [] };
+    dailyLog[today] = { completed: 0, xpEarned: 0, goldEarned: 0, tasks: [] };
   }
   dailyLog[today].completed += 1;
   dailyLog[today].xpEarned += xpEarned;
@@ -69,6 +69,16 @@ async function recordTaskCompleted(xpEarned) {
   weeklyLog[week].completed += 1;
   weeklyLog[week].xpEarned += xpEarned;
   await saveData('@lifequest_weekly_log', weeklyLog);
+}
+
+async function recordGoldEarned(amount) {
+  const today = getTodayKey();
+  const dailyLog = await loadData('@lifequest_daily_log', {});
+  if (!dailyLog[today]) {
+    dailyLog[today] = { completed: 0, xpEarned: 0, goldEarned: 0, tasks: [] };
+  }
+  dailyLog[today].goldEarned = (dailyLog[today].goldEarned || 0) + amount;
+  await saveData('@lifequest_daily_log', dailyLog);
 }
 
 async function getTodayStats() {
@@ -105,6 +115,7 @@ export {
   getTodayKey,
   getWeekKey,
   recordTaskCompleted,
+  recordGoldEarned,
   getTodayStats,
   getWeeklyStats,
   logAchievement,

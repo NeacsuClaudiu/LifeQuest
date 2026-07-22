@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { DIFFICULTIES } from '../data/TaskDatabase';
 import { getLevelInfo, getEvolutionStage, getEvolutionColor, processDayCheck, getXpPenalty, getElement, ELEMENTS, checkAchievements, getUnlockedAchievements, ACHIEVEMENTS } from '../data/CharacterData';
-import { loadData, saveData, KEYS, getTodayStats, getWeeklyStats, recordTaskCompleted, logAchievement } from '../utils/Storage';
+import { loadData, saveData, KEYS, getTodayStats, getWeeklyStats, recordTaskCompleted, recordGoldEarned, logAchievement } from '../utils/Storage';
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import { getQuoteOfDay } from '../data/Quotes';
 import CharacterView from '../components/CharacterView';
@@ -121,6 +121,7 @@ export default function HomeScreen({ navigation }) {
     const levelInfo = getLevelInfo(updated.totalXpEarned);
     if (levelInfo.level > updated.level) updated.level = levelInfo.level;
     await saveData(KEYS.CHARACTER, updated);
+    await recordGoldEarned(rewards.gold);
     setCharacter(updated);
   }, [character]);
 
