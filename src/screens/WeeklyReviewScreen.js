@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -9,6 +9,9 @@ import { loadData, KEYS } from '../utils/Storage';
 import { DIFFICULTIES, CATEGORIES } from '../data/TaskDatabase';
 import CharacterView from '../components/CharacterView';
 import { useTheme } from '../context/ThemeContext';
+import PressableScale from '../components/PressableScale';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -174,7 +177,18 @@ export default function WeeklyReviewScreen({ navigation }) {
   const weekId = useMemo(() => getWeekId(), []);
 
   if (!character) {
-    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={[styles.loadingText, { color: colors.accent }]}>Loading...</Text></View>;
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Skeleton width={80} height={80} borderRadius={40} style={{ marginBottom: 16 }} />
+        <Skeleton width="50%" height={20} style={{ marginBottom: 8 }} />
+        <Skeleton width="30%" height={14} />
+        <View style={{ marginTop: 24, paddingHorizontal: 16, width: '100%' }}>
+          <SkeletonCard height={80} />
+          <SkeletonCard height={80} />
+          <SkeletonCard height={80} />
+        </View>
+      </View>
+    );
   }
 
   const element = character.element || 'plant';

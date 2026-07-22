@@ -1,5 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import PressableScale from '../components/PressableScale';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import FloatingReward from '../components/FloatingReward';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,9 +39,7 @@ function MiniCard({ icon, iconColor, title, subtitle, progress, progressColor, d
         <Text style={[styles.miniTitle, { color: colors.textPrimary }]}>{title}</Text>
       </View>
       {progress !== undefined && (
-        <View style={[styles.miniBarOuter, { backgroundColor: colors.cardBorder }]}>
-          <View style={[styles.miniBarFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: progressColor }]} />
-        </View>
+        <AnimatedProgressBar progress={Math.min(progress, 100)} color={progressColor} height={6} backgroundColor={colors.cardBorder} />
       )}
       {subtitle && <Text style={[styles.miniSub, { color: colors.textSecondary }]}>{subtitle}</Text>}
     </Animated.View>
@@ -136,7 +138,14 @@ export default function HomeScreen({ navigation }) {
   if (!character) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: colors.accent }]}>Start your journey...</Text>
+        <Skeleton width={80} height={80} borderRadius={40} style={{ marginBottom: 16 }} />
+        <Skeleton width="60%" height={20} style={{ marginBottom: 8 }} />
+        <Skeleton width="40%" height={14} />
+        <View style={{ marginTop: 30, paddingHorizontal: 16, width: '100%' }}>
+          <SkeletonCard height={100} />
+          <SkeletonCard height={80} />
+          <SkeletonCard height={60} />
+        </View>
       </View>
     );
   }
@@ -215,9 +224,7 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons name="leaf" size={16} color={stageColor} />
                 <Text style={[styles.evoTitle, { color: stageColor }]}>Evolution Progress</Text>
               </View>
-              <View style={[styles.evoBarOuter, { backgroundColor: colors.cardBorder }]}>
-                <View style={[styles.evoBarFill, { width: `${progressPercent}%`, backgroundColor: stageColor }]} />
-              </View>
+              <AnimatedProgressBar progress={progressPercent} color={stageColor} height={8} />
               <Text style={[styles.evoSub, { color: colors.textSecondary }]}>
                 {character.evolutionStage || 0} of {maxStages} stages | {stage.description}
               </Text>
@@ -313,9 +320,9 @@ export default function HomeScreen({ navigation }) {
                     <Ionicons name="trophy" size={16} color={colors.accent} />
                     <Text style={[styles.achievementsSectionTitle, { color: colors.accent }]}>Recent Achievements</Text>
                   </View>
-                  <TouchableOpacity onPress={() => navigation.navigate('Stats')}>
+                  <PressableScale onPress={() => navigation.navigate('Stats')}>
                     <Text style={[styles.achSeeAll, { color: colors.accent }]}>See All</Text>
-                  </TouchableOpacity>
+                  </PressableScale>
                 </View>
                 {recentAchievements.slice(0, 3).map((a, i) => {
                   const def = ACHIEVEMENTS.find(d => d.id === a.id);
@@ -346,12 +353,12 @@ export default function HomeScreen({ navigation }) {
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Today's Tasks</Text>
                 <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{tasks.length} active</Text>
               </View>
-              <TouchableOpacity
+              <PressableScale
                 style={[styles.seeAllBtn, { backgroundColor: colors.accent + '15' }]}
                 onPress={() => navigation.navigate('Tasks')}
               >
                 <Text style={[styles.seeAllText, { color: colors.accent }]}>See All</Text>
-              </TouchableOpacity>
+              </PressableScale>
             </Animated.View>
           </>
         }

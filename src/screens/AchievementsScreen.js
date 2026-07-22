@@ -9,6 +9,9 @@ import { loadData, saveData, KEYS, logAchievement, getRecentAchievements } from 
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import ConfettiOverlay from '../components/ConfettiOverlay';
 import { useTheme } from '../context/ThemeContext';
+import PressableScale from '../components/PressableScale';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 
 function AchievementCard({ achievement, progress, progressLabel, unlocked, color, delay }) {
   const { colors } = useTheme();
@@ -31,9 +34,7 @@ function AchievementCard({ achievement, progress, progressLabel, unlocked, color
           </View>
         ) : (
           <View style={styles.progressRow}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
-              <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: color + '88' }]} />
-            </View>
+            <AnimatedProgressBar progress={Math.min(progress, 100)} color={color} height={4} backgroundColor={colors.cardBorder} />
             <Text style={[styles.progressLabel, { color: colors.textMuted }]}>{progressLabel}</Text>
           </View>
         )}
@@ -131,8 +132,17 @@ export default function AchievementsScreen() {
 
   if (!character) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: colors.accent }]}>Loading achievements...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <Skeleton width={28} height={28} borderRadius={14} />
+          <Skeleton width={160} height={26} style={{ marginLeft: 10 }} />
+        </View>
+        <View style={{ paddingHorizontal: 16 }}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
       </View>
     );
   }
@@ -179,14 +189,12 @@ export default function AchievementsScreen() {
               <Text style={[styles.overviewLabel, { color: colors.textSecondary }]}>Complete</Text>
             </View>
           </View>
-          <View style={[styles.overviewBar, { backgroundColor: colors.cardBorder }]}>
-            <View style={[styles.overviewBarFill, { width: `${percentComplete}%`, backgroundColor: colors.accent }]} />
-          </View>
+          <AnimatedProgressBar progress={percentComplete} color={colors.accent} height={6} backgroundColor={colors.cardBorder} />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.filterRow}>
           {filterOptions.map((f) => (
-            <TouchableOpacity
+            <PressableScale
               key={f.key}
               style={[styles.filterChip, activeFilter === f.key && styles.filterChipActive, { backgroundColor: activeFilter === f.key ? colors.accent : colors.cardBg, borderColor: activeFilter === f.key ? colors.accent : colors.cardBorder }]}
               onPress={() => { Haptics.selectionAsync(); setActiveFilter(f.key); }}
@@ -195,7 +203,7 @@ export default function AchievementsScreen() {
               <Text style={[styles.filterText, activeFilter === f.key && styles.filterTextActive, { color: activeFilter === f.key ? colors.background : colors.textSecondary }]}>
                 {f.label}
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
           ))}
         </Animated.View>
 

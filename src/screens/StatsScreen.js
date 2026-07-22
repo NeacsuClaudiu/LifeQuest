@@ -9,6 +9,9 @@ import { loadData, saveData, clearAll, KEYS, getTodayKey, getWeekKey } from '../
 import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import { CATEGORIES } from '../data/TaskDatabase';
 import Heatmap from '../components/Heatmap';
+import PressableScale from '../components/PressableScale';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -67,7 +70,14 @@ export default function StatsScreen() {
   };
 
   if (!character) {
-    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={[styles.loadingText, { color: colors.accent }]}>Loading...</Text></View>;
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </View>
+    );
   }
 
   const completedTasks = tasks.filter(t => t.completed);
@@ -153,8 +163,8 @@ export default function StatsScreen() {
           ))}
         </View>
         <View style={styles.progressMeta}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
-            <View style={[styles.progressBarFill, { width: `${(todayComplete / dailyGoal) * 100}%` }]} />
+          <View style={{ width: '80%', marginBottom: 6 }}>
+            <AnimatedProgressBar progress={(todayComplete / dailyGoal) * 100} color="#4CAF50" height={6} borderRadius={3} backgroundColor={colors.cardBorder} />
           </View>
           <Text style={styles.progressText}>{todayComplete} / {dailyGoal} tasks</Text>
         </View>
@@ -191,10 +201,7 @@ export default function StatsScreen() {
                   <Text style={styles.categoryXp}>+{xpTotal} XP</Text>
                 </View>
                 <View style={styles.categoryBarBg}>
-                  <View style={[styles.categoryBarFill, {
-                    width: `${(count / maxCount) * 100}%`,
-                    backgroundColor: catData?.color || colors.accent,
-                  }]} />
+                  <AnimatedProgressBar progress={(count / maxCount) * 100} color={catData?.color || colors.accent} height={8} borderRadius={4} />
                 </View>
                 <Text style={[styles.categoryCount, { color: catData?.color || colors.accent }]}>{count}</Text>
               </View>
@@ -211,7 +218,7 @@ export default function StatsScreen() {
               <Text style={styles.periodValue}>{tasksThisWeek}</Text>
               <Text style={styles.periodLabel}>This Week</Text>
               <View style={styles.periodBar}>
-                <View style={[styles.periodBarFill, { width: `${Math.min((tasksThisWeek / dailyGoal) * 100, 100)}%`, backgroundColor: '#FF9800' }]} />
+                <AnimatedProgressBar progress={Math.min((tasksThisWeek / dailyGoal) * 100, 100)} color="#FF9800" height={4} borderRadius={2} />
               </View>
             </View>
             <View style={[styles.periodCard, { borderColor: '#2196F333' }]}>
@@ -219,7 +226,7 @@ export default function StatsScreen() {
               <Text style={styles.periodValue}>{tasksThisMonth}</Text>
               <Text style={styles.periodLabel}>This Month</Text>
               <View style={styles.periodBar}>
-                <View style={[styles.periodBarFill, { width: `${Math.min((tasksThisMonth / (dailyGoal * 4)) * 100, 100)}%`, backgroundColor: '#2196F3' }]} />
+                <AnimatedProgressBar progress={Math.min((tasksThisMonth / (dailyGoal * 4)) * 100, 100)} color="#2196F3" height={4} borderRadius={2} />
               </View>
             </View>
           </View>
@@ -246,9 +253,7 @@ export default function StatsScreen() {
                 <Text style={styles.milestoneLabel}>{m.label}</Text>
                 <Text style={styles.milestoneSub}>{m.sub}</Text>
               </View>
-              <View style={styles.milestoneBar}>
-                <View style={[styles.milestoneBarFill, { width: `${m.progress}%`, backgroundColor: m.color }]} />
-              </View>
+              <AnimatedProgressBar progress={m.progress} color={m.color} height={6} borderRadius={3} />
             </View>
           ))}
         </View>
@@ -277,10 +282,10 @@ export default function StatsScreen() {
         </AnimatedCard>
       )}
 
-      <TouchableOpacity style={styles.resetBtn} onPress={resetGame}>
+      <PressableScale style={styles.resetBtn} onPress={resetGame}>
         <Ionicons name="trash-outline" size={16} color="#F44336" />
         <Text style={styles.resetText}>Reset Game</Text>
-      </TouchableOpacity>
+      </PressableScale>
     </ScrollView>
   );
 }

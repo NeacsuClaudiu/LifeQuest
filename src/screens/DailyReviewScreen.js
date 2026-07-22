@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -8,6 +8,9 @@ import { getLevelInfo, getEvolutionStage, getEvolutionColor } from '../data/Char
 import { loadData, KEYS, getTodayStats } from '../utils/Storage';
 import CharacterView from '../components/CharacterView';
 import { useTheme } from '../context/ThemeContext';
+import PressableScale from '../components/PressableScale';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 
 const DAILY_GOAL = 5;
 
@@ -65,16 +68,14 @@ function StatCard({ label, value, icon, color, suffix, delay, format }) {
   );
 }
 
-function ProductivityGauge({ score, label, color, icon }) {
+function ProductivityGauge({ score, label, color, icon, colors }) {
   return (
-    <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.gaugeCard}>
+    <Animated.View entering={FadeInDown.delay(300).springify()} style={[styles.gaugeCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
       <View style={styles.gaugeHeader}>
         <Ionicons name={icon} size={20} color={color} />
         <Text style={[styles.gaugeLabel, { color }]}>{label}</Text>
       </View>
-      <View style={styles.gaugeRing}>
-        <View style={[styles.gaugeFill, { width: `${score}%`, backgroundColor: color }]} />
-      </View>
+      <AnimatedProgressBar progress={score} color={color} height={12} backgroundColor={colors.cardBorder} style={{ width: '100%' }} />
       <Text style={styles.gaugeScore}>{score}%</Text>
     </Animated.View>
   );
@@ -93,7 +94,18 @@ export default function DailyReviewScreen({ navigation }) {
   }, []));
 
   if (!character) {
-    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={[styles.loadingText, { color: colors.accent }]}>Loading...</Text></View>;
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Skeleton width={80} height={80} borderRadius={40} style={{ marginBottom: 16 }} />
+        <Skeleton width="50%" height={20} style={{ marginBottom: 8 }} />
+        <Skeleton width="30%" height={14} />
+        <View style={{ marginTop: 24, paddingHorizontal: 16, width: '100%' }}>
+          <SkeletonCard height={80} />
+          <SkeletonCard height={80} />
+          <SkeletonCard height={80} />
+        </View>
+      </View>
+    );
   }
 
   const element = character.element || 'plant';
@@ -136,9 +148,7 @@ export default function DailyReviewScreen({ navigation }) {
             <Text style={[styles.completionTitle, { color: colors.textPrimary }]}>Completion</Text>
             <Text style={[styles.completionPct, { color: colors.accent }]}>{completionPct}%</Text>
           </View>
-          <View style={[styles.completionBar, { backgroundColor: colors.cardBorder }]}>
-            <View style={[styles.completionFill, { width: `${completionPct}%`, backgroundColor: colors.accent }]} />
-          </View>
+          <AnimatedProgressBar progress={completionPct} color={colors.accent} height={8} backgroundColor={colors.cardBorder} />
           <Text style={[styles.completionSub, { color: colors.textSecondary }]}>
             {completed} of {DAILY_GOAL} daily tasks completed
           </Text>
@@ -150,6 +160,7 @@ export default function DailyReviewScreen({ navigation }) {
         label={productivityTier.label}
         color={productivityTier.color}
         icon={productivityTier.icon}
+        colors={colors}
       />
 
       <Animated.View entering={FadeInDown.delay(400).springify()} style={[styles.summaryCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
@@ -164,13 +175,13 @@ export default function DailyReviewScreen({ navigation }) {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(450).springify()} style={styles.actionRow}>
-        <TouchableOpacity
+        <PressableScale
           style={[styles.actionBtn, { backgroundColor: colors.accent }]}
           onPress={() => navigation.navigate('Tasks')}
         >
           <Ionicons name="add-circle-outline" size={18} color={colors.buttonText} />
           <Text style={[styles.actionBtnText, { color: colors.buttonText }]}>Start new tasks</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </Animated.View>
     </ScrollView>
   );

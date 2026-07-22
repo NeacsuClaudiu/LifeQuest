@@ -12,6 +12,9 @@ import { DEFAULT_CHARACTER } from '../data/CharacterData';
 import CharacterView from '../components/CharacterView';
 import { THEMES, isThemePurchased, canAffordTheme, purchaseTheme } from '../data/Themes';
 import { useTheme } from '../context/ThemeContext';
+import PressableScale from '../components/PressableScale';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 
 function ShopItem({ item, owned, equipped, onPress, delay, colors }) {
   return (
@@ -19,7 +22,7 @@ function ShopItem({ item, owned, equipped, onPress, delay, colors }) {
       entering={FadeInDown.delay(delay).springify()}
       layout={Layout.springify()}
     >
-      <TouchableOpacity
+      <PressableScale
         style={[styles.itemCard, { backgroundColor: colors.cardBg, borderColor: equipped ? colors.accent : colors.cardBorder }, equipped && styles.equippedCard, !owned && styles.lockedCard]}
         onPress={onPress}
       >
@@ -32,7 +35,7 @@ function ShopItem({ item, owned, equipped, onPress, delay, colors }) {
         ) : (
           <Text style={[styles.lockedStatus, { color: colors.danger }]}>Lv.{item.minLevel}</Text>
         )}
-      </TouchableOpacity>
+      </PressableScale>
     </Animated.View>
   );
 }
@@ -84,7 +87,18 @@ export default function CharacterScreen() {
   };
 
   if (!character) {
-    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={[styles.loadingText, { color: colors.accent }]}>Loading...</Text></View>;
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Skeleton width={80} height={80} borderRadius={40} style={{ marginBottom: 16 }} />
+        <Skeleton width="50%" height={20} style={{ marginBottom: 8 }} />
+        <Skeleton width="30%" height={14} />
+        <View style={{ marginTop: 24, paddingHorizontal: 16, width: '100%' }}>
+          <SkeletonCard height={80} />
+          <SkeletonCard height={60} />
+          <SkeletonCard height={60} />
+        </View>
+      </View>
+    );
   }
 
   const levelInfo = getLevelInfo(character.level);
@@ -122,10 +136,10 @@ export default function CharacterScreen() {
       <LinearGradient colors={[stageColor + '33', colors.background]} style={styles.heroGradient}>
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.hero}>
           <CharacterView character={character} size="large" />
-          <TouchableOpacity onPress={renameCharacter} style={styles.nameWrap}>
+          <PressableScale onPress={renameCharacter} style={styles.nameWrap}>
             <Text style={[styles.charName, { color: colors.textPrimary }]}>{character.name || 'Hero'}</Text>
             <Text style={[styles.tapRename, { color: colors.textMuted }]}>tap to rename</Text>
-          </TouchableOpacity>
+          </PressableScale>
           <View style={[styles.levelBadge, { backgroundColor: stageColor }]}>
             <Text style={styles.levelBadgeText}>Lv.{character.level} {levelInfo.title}</Text>
           </View>
@@ -138,14 +152,14 @@ export default function CharacterScreen() {
         <Text style={[styles.elementTitle, { color: colors.textPrimary }]}>Choose Element</Text>
         <View style={styles.elementRow}>
           {Object.values(ELEMENTS).map((el) => (
-            <TouchableOpacity
+            <PressableScale
               key={el.id}
               style={[styles.elementBtn, { backgroundColor: colors.cardBorder, borderColor: colors.cardBorder }, currentElement === el.id && { backgroundColor: el.color + '33', borderColor: el.color }]}
               onPress={() => switchElement(el.id)}
             >
               <Ionicons name={el.icon} size={20} color={currentElement === el.id ? el.color : colors.textMuted} />
               <Text style={[styles.elementBtnText, { color: currentElement === el.id ? el.color : colors.textMuted }]}>{el.name}</Text>
-            </TouchableOpacity>
+            </PressableScale>
           ))}
         </View>
       </Animated.View>
@@ -178,12 +192,7 @@ export default function CharacterScreen() {
           <View key={stat.label} style={styles.statRow}>
             <Ionicons name={stat.icon} size={16} color={stat.color} style={{ width: 30 }} />
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
-            <View style={[styles.statBarBg, { backgroundColor: colors.cardBorder }]}>
-              <View style={[styles.statBarFill, {
-                width: `${Math.min(stat.value * 5, 100)}%`,
-                backgroundColor: stat.color,
-              }]} />
-            </View>
+<AnimatedProgressBar progress={Math.min(stat.value * 5, 100)} color={stat.color} height={8} backgroundColor={colors.cardBorder} />
             <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
           </View>
         ))}
@@ -194,7 +203,7 @@ export default function CharacterScreen() {
 
         <View style={styles.tabRow}>
           {['customize', 'hats', 'accessories', 'auras', 'themes'].map(tab => (
-            <TouchableOpacity
+            <PressableScale
               key={tab}
               style={[styles.tab, { backgroundColor: activeTab === tab ? colors.accent : colors.cardBg, borderColor: activeTab === tab ? colors.accent : colors.cardBorder }]}
               onPress={() => { Haptics.selectionAsync(); setActiveTab(tab); }}
@@ -202,7 +211,7 @@ export default function CharacterScreen() {
               <Text style={[styles.tabText, { color: activeTab === tab ? colors.buttonText : colors.textMuted }]}>
                 {tab === 'customize' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
           ))}
         </View>
 
@@ -214,7 +223,7 @@ export default function CharacterScreen() {
               const affordable = canAffordTheme(character, theme);
               return (
                 <Animated.View key={theme.id} entering={FadeInDown.delay(400 + i * 50).springify()} layout={Layout.springify()} style={{ width: '48%' }}>
-                  <TouchableOpacity
+                  <PressableScale
                     style={[
                       styles.themeCard,
                       equipped && styles.themeEquippedCard,
@@ -260,7 +269,7 @@ export default function CharacterScreen() {
                         </Text>
                       )}
                     </View>
-                  </TouchableOpacity>
+                  </PressableScale>
                 </Animated.View>
               );
             })}

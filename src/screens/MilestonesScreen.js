@@ -8,6 +8,9 @@ import { getLevelInfo, getEvolutionStage, getEvolutionColor } from '../data/Char
 import { loadData, KEYS } from '../utils/Storage';
 import CharacterView from '../components/CharacterView';
 import { useTheme } from '../context/ThemeContext';
+import PressableScale from '../components/PressableScale';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 
 const MILESTONES = [
   { id: 'xp_100', category: 'xp', label: '100 XP', target: 100, icon: 'flash', color: '#FFD700' },
@@ -70,9 +73,7 @@ function MilestoneCard({ milestone, current, index }) {
       </View>
       <View style={styles.cardBody}>
         <Text style={styles.cardLabel}>{milestone.label}</Text>
-        <View style={styles.cardBar}>
-          <View style={[styles.cardBarFill, { width: `${progress}%`, backgroundColor: isComplete ? '#4CAF50' : milestone.color }]} />
-        </View>
+        <AnimatedProgressBar progress={progress} color={isComplete ? '#4CAF50' : milestone.color} height={6} backgroundColor={colors.cardBorder} />
         <Text style={styles.cardMeta}>
           {isComplete ? 'Completed!' : `${current.toLocaleString()} / ${milestone.target.toLocaleString()}`}
         </Text>
@@ -97,7 +98,19 @@ export default function MilestonesScreen() {
   }, []));
 
   if (!character) {
-    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={[styles.loadingText, { color: colors.accent }]}>Loading...</Text></View>;
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Skeleton width={80} height={80} borderRadius={40} style={{ marginBottom: 16 }} />
+        <Skeleton width="50%" height={20} style={{ marginBottom: 8 }} />
+        <Skeleton width="30%" height={14} />
+        <View style={{ marginTop: 24, paddingHorizontal: 16, width: '100%' }}>
+          <SkeletonCard height={60} />
+          <SkeletonCard height={60} />
+          <SkeletonCard height={60} />
+          <SkeletonCard height={60} />
+        </View>
+      </View>
+    );
   }
 
   const element = character.element || 'plant';
@@ -126,16 +139,20 @@ export default function MilestonesScreen() {
         <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.filterInner}>
           {[{ id: 'all', label: 'All', icon: 'apps', color: colors.accent }, ...CATEGORIES].map(cat => (
             <Animated.View key={cat.id} entering={FadeInDown.delay(150).springify()}>
-              <View
-                style={[
-                  styles.filterChip,
-                  activeCategory === cat.id && { backgroundColor: cat.color + '22', borderColor: cat.color },
-                  { backgroundColor: activeCategory === cat.id ? cat.color + '22' : colors.cardBg, borderColor: activeCategory === cat.id ? cat.color : colors.cardBorder },
-                ]}
+              <PressableScale
+                onPress={() => setActiveCategory(cat.id)}
               >
-                <Ionicons name={cat.icon} size={14} color={activeCategory === cat.id ? cat.color : colors.textMuted} />
-                <Text style={[styles.filterText, { color: activeCategory === cat.id ? cat.color : colors.textSecondary }]}>{cat.label}</Text>
-              </View>
+                <View
+                  style={[
+                    styles.filterChip,
+                    activeCategory === cat.id && { backgroundColor: cat.color + '22', borderColor: cat.color },
+                    { backgroundColor: activeCategory === cat.id ? cat.color + '22' : colors.cardBg, borderColor: activeCategory === cat.id ? cat.color : colors.cardBorder },
+                  ]}
+                >
+                  <Ionicons name={cat.icon} size={14} color={activeCategory === cat.id ? cat.color : colors.textMuted} />
+                  <Text style={[styles.filterText, { color: activeCategory === cat.id ? cat.color : colors.textSecondary }]}>{cat.label}</Text>
+                </View>
+              </PressableScale>
             </Animated.View>
           ))}
         </Animated.View>

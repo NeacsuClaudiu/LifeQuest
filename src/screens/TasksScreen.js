@@ -14,6 +14,10 @@ import TaskCard from '../components/TaskCard';
 import ConfettiOverlay from '../components/ConfettiOverlay';
 import AchievementToast from '../components/AchievementToast';
 import { useTheme } from '../context/ThemeContext';
+import PressableScale from '../components/PressableScale';
+import FloatingReward from '../components/FloatingReward';
+import AnimatedProgressBar from '../components/AnimatedProgressBar';
+import Skeleton, { SkeletonCard } from '../components/Skeleton';
 
 const CATEGORY_ASSETS = {
   phone_detox: require('../../assets/categories/phone_detox.png'),
@@ -43,6 +47,7 @@ export default function TasksScreen() {
   const [levelUpConfetti, setLevelUpConfetti] = useState(false);
   const [rewardPopup, setRewardPopup] = useState(null);
   const [toastAchievement, setToastAchievement] = useState(null);
+  const [floatRewards, setFloatRewards] = useState([]);
 
   const loadAllData = useCallback(async () => {
     const t = await loadData(KEYS.TASKS, []);
@@ -133,6 +138,9 @@ export default function TasksScreen() {
       setToastAchievement(newlyUnlocked[0]);
     }
 
+    const rewardId = Date.now();
+    setFloatRewards(prev => [...prev, { id: rewardId, xp: rewardXp }]);
+    setTimeout(() => setFloatRewards(prev => prev.filter(r => r.id !== rewardId)), 1500);
     setRewardPopup({ xp: rewardXp, task: task.title });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setTimeout(() => setRewardPopup(null), 2000);
@@ -189,6 +197,19 @@ export default function TasksScreen() {
   const completedTasks = filteredTasks.filter(t => t.completed);
   const penalty = character ? getXpPenalty(character) : 0;
 
+  if (!character) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Skeleton width={60} height={60} borderRadius={16} style={{ marginBottom: 16 }} />
+        <Skeleton width="50%" height={18} style={{ marginBottom: 8 }} />
+        <Skeleton width="30%" height={12} />
+        <View style={{ marginTop: 24, paddingHorizontal: 16, width: '100%' }}>
+          {[1,2,3,4].map(i => <SkeletonCard key={i} height={70} />)}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -204,6 +225,10 @@ export default function TasksScreen() {
             </View>
           </Animated.View>
         )}
+
+        {floatRewards.map(fr => (
+          <FloatingReward key={fr.id} value={fr.xp} label="XP" icon="flash" color={colors.accent} />
+        ))}
 
         <FlatList
           ListHeaderComponent={
@@ -227,7 +252,7 @@ export default function TasksScreen() {
                   keyExtractor={d => d}
                   contentContainerStyle={styles.filterContent}
                   renderItem={({ item: d }) => (
-                    <TouchableOpacity
+                    <PressableScale
                       style={[styles.filterChip, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }, filterDifficulty === d && {
                         backgroundColor: d === 'all' ? colors.accent : DIFFICULTIES[d].color,
                         borderColor: d === 'all' ? colors.accent : DIFFICULTIES[d].color,
@@ -237,7 +262,7 @@ export default function TasksScreen() {
                       <Text style={[styles.filterText, { color: colors.textSecondary }, filterDifficulty === d && { color: colors.textPrimary }]}>
                         {d === 'all' ? 'ALL' : DIFFICULTIES[d].label}
                       </Text>
-                    </TouchableOpacity>
+                    </PressableScale>
                   )}
                 />
               </Animated.View>
@@ -284,18 +309,18 @@ export default function TasksScreen() {
         />
 
         <View style={styles.fabRow}>
-          <TouchableOpacity style={[styles.fabSecondary, { backgroundColor: colors.cardBg, borderColor: colors.accent + '44' }]} onPress={() => {
+          <PressableScale style={[styles.fabSecondary, { backgroundColor: colors.cardBg, borderColor: colors.accent + '44' }]} onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setShowPresets(true);
           }}>
             <Ionicons name="list-outline" size={24} color={colors.accent} />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.fab, { backgroundColor: colors.accent, shadowColor: colors.accent }]} onPress={() => {
+          </PressableScale>
+          <PressableScale style={[styles.fab, { backgroundColor: colors.accent, shadowColor: colors.accent }]} onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setShowModal(true);
           }}>
             <Ionicons name="add" size={30} color={colors.background} />
-          </TouchableOpacity>
+          </PressableScale>
         </View>
 
         <Modal visible={showModal} transparent animationType="slide">
@@ -315,18 +340,18 @@ export default function TasksScreen() {
               <FlatList horizontal showsHorizontalScrollIndicator={false} data={CATEGORIES}
                 keyExtractor={c => c.id}
                 renderItem={({ item: cat }) => (
-                  <TouchableOpacity
+                  <PressableScale
                     style={[styles.pickerChip, { backgroundColor: colors.cardBorder }, newCategory === cat.id && { backgroundColor: cat.color + '44', borderColor: cat.color }]}
                     onPress={() => { Haptics.selectionAsync(); setNewCategory(cat.id); }}
                   >
                     <Text style={[styles.pickerChipText, { color: colors.textPrimary }]}>{cat.icon} {cat.label}</Text>
-                  </TouchableOpacity>
+                  </PressableScale>
                 )}
               />
               <Text style={[styles.label, { color: colors.textSecondary }]}>Difficulty</Text>
               <View style={styles.diffRow}>
                 {Object.entries(DIFFICULTIES).map(([key, val]) => (
-                  <TouchableOpacity
+                  <PressableScale
                     key={key}
                     style={[styles.diffChip, { backgroundColor: colors.cardBorder }, newDifficulty === key && { backgroundColor: val.color + '44', borderColor: val.color }]}
                     onPress={() => { Haptics.selectionAsync(); setNewDifficulty(key); }}
@@ -335,16 +360,16 @@ export default function TasksScreen() {
                       {val.icon} {val.label}
                     </Text>
                     <Text style={[styles.diffXp, { color: colors.accent }]}>+{val.xp} XP</Text>
-                  </TouchableOpacity>
+                  </PressableScale>
                 ))}
               </View>
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowModal(false)}>
+                <PressableScale style={styles.cancelBtn} onPress={() => setShowModal(false)}>
                   <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.addBtn} onPress={addTask}>
+                </PressableScale>
+                <PressableScale style={styles.addBtn} onPress={addTask}>
                   <Text style={[styles.addText, { color: colors.background }]}>Add Quest</Text>
-                </TouchableOpacity>
+                </PressableScale>
               </View>
             </Animated.View>
           </BlurView>
@@ -358,7 +383,7 @@ export default function TasksScreen() {
               <FlatList data={PRESET_TASKS} keyExtractor={(item, i) => i.toString()}
                 renderItem={({ item, index }) => (
                   <Animated.View entering={FadeInDown.delay(index * 30).springify()}>
-                    <TouchableOpacity style={styles.presetItem} onPress={() => addPresetTask(item)}>
+                    <PressableScale style={styles.presetItem} onPress={() => addPresetTask(item)}>
                       <View style={[styles.presetIconWrap, { backgroundColor: (CATEGORIES.find(c => c.id === item.category)?.color || colors.textSecondary) + '22' }]}>
                         <Image source={CATEGORY_ASSETS[item.category]} style={{ width: 28, height: 28 }} />
                       </View>
@@ -369,14 +394,14 @@ export default function TasksScreen() {
                         </Text>
                       </View>
                       <Ionicons name="add-circle" size={28} color={colors.accent} />
-                    </TouchableOpacity>
+                    </PressableScale>
                   </Animated.View>
                 )}
                 style={{ maxHeight: 400 }}
               />
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowPresets(false)}>
+              <PressableScale style={styles.cancelBtn} onPress={() => setShowPresets(false)}>
                   <Text style={[styles.cancelText, { color: colors.textMuted }]}>Close</Text>
-              </TouchableOpacity>
+              </PressableScale>
             </Animated.View>
           </BlurView>
         </Modal>
