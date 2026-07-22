@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
@@ -45,6 +45,7 @@ export default function StatsScreen() {
   const { colors } = useTheme();
   const [character, setCharacter] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   useFocusEffect(useCallback(async () => {
     let c = await loadData(KEYS.CHARACTER);
@@ -57,16 +58,12 @@ export default function StatsScreen() {
     setTasks(t);
   }, []));
 
-  const resetGame = () => {
+  const resetGame = async () => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
-    Alert.alert('Reset Game', 'All progress will be lost! Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Reset', style: 'destructive', onPress: async () => {
-        await clearAll();
-        setCharacter(DEFAULT_CHARACTER);
-        setTasks([]);
-      }},
-    ]);
+    await clearAll();
+    setCharacter({ ...DEFAULT_CHARACTER });
+    setTasks([]);
+    setShowResetModal(false);
   };
 
   if (!character) {
@@ -282,10 +279,31 @@ export default function StatsScreen() {
         </AnimatedCard>
       )}
 
-      <TouchableOpacity style={[styles.resetBtn, { backgroundColor: colors.cardBg, borderColor: '#F4433633' }]} onPress={resetGame}>
+      <TouchableOpacity style={[styles.resetBtn, { backgroundColor: colors.cardBg, borderColor: '#F4433633' }]} onPress={() => setShowResetModal(true)}>
         <Ionicons name="trash-outline" size={16} color="#F44336" />
         <Text style={styles.resetText}>Reset Game</Text>
       </TouchableOpacity>
+
+      <Modal visible={showResetModal} transparent animationType="fade" onRequestClose={() => setShowResetModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+            <Ionicons name="warning-outline" size={40} color="#F44336" style={{ marginBottom: 12 }} />
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Reset Game?</Text>
+            <Text style={[styles.modalText, { color: colors.textSecondary }]}>
+              All progress will be lost!{'\n'}Character, XP, gold, tasks, achievements, and themes will be deleted forever.
+            </Text>
+            <View style={styles.modalRow}>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#333' }]} onPress={() => setShowResetModal(false)}>
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#F44336' }]} onPress={resetGame}>
+                <Ionicons name="trash-outline" size={14} color="#fff" />
+                <Text style={[styles.modalBtnText, { marginLeft: 6 }]}>Delete Everything</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -294,7 +312,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0D0D1A' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D0D1A' },
   loadingText: { color: '#FFD700', fontSize: 18 },
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { paddingBottom: 40 },
   header: { padding: 24, alignItems: 'center' },
   headerIconWrap: { marginBottom: 8 },
   headerTitle: { color: '#fff', fontSize: 30, fontWeight: '900' },
@@ -369,4 +387,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'center', gap: 8,
   },
   resetText: { color: '#F44336', fontSize: 14, fontWeight: '600' },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center',
+    alignItems: 'center', padding: 32,
+  },
+  modalContent: {
+    borderRadius: 20, padding: 24, borderWidth: 1, alignItems: 'center',
+    width: '100%', maxWidth: 340,
+  },
+  modalTitle: { fontSize: 20, fontWeight: '900', marginBottom: 8 },
+  modalText: { fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  modalRow: { flexDirection: 'row', gap: 12 },
+  modalBtn: {
+    flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  modalBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
